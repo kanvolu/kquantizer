@@ -103,6 +103,7 @@ CMakeFiles/KQuantizer.dir/main.cpp.o: /home/kanvolu/Documents/Dev_Projects/kquan
   /usr/include/c++/15.1.1/bits/basic_string.tcc \
   /usr/include/c++/15.1.1/bits/char_traits.h \
   /usr/include/c++/15.1.1/bits/charconv.h \
+  /usr/include/c++/15.1.1/bits/codecvt.h \
   /usr/include/c++/15.1.1/bits/concept_check.h \
   /usr/include/c++/15.1.1/bits/cpp_type_traits.h \
   /usr/include/c++/15.1.1/bits/cxxabi_forced.h \
@@ -110,6 +111,7 @@ CMakeFiles/KQuantizer.dir/main.cpp.o: /home/kanvolu/Documents/Dev_Projects/kquan
   /usr/include/c++/15.1.1/bits/exception.h \
   /usr/include/c++/15.1.1/bits/exception_defines.h \
   /usr/include/c++/15.1.1/bits/exception_ptr.h \
+  /usr/include/c++/15.1.1/bits/fstream.tcc \
   /usr/include/c++/15.1.1/bits/functexcept.h \
   /usr/include/c++/15.1.1/bits/functional_hash.h \
   /usr/include/c++/15.1.1/bits/hash_bytes.h \
@@ -174,6 +176,7 @@ CMakeFiles/KQuantizer.dir/main.cpp.o: /home/kanvolu/Documents/Dev_Projects/kquan
   /usr/include/c++/15.1.1/ext/numeric_traits.h \
   /usr/include/c++/15.1.1/ext/string_conversions.h \
   /usr/include/c++/15.1.1/ext/type_traits.h \
+  /usr/include/c++/15.1.1/fstream \
   /usr/include/c++/15.1.1/initializer_list \
   /usr/include/c++/15.1.1/ios \
   /usr/include/c++/15.1.1/iosfwd \
@@ -207,8 +210,10 @@ CMakeFiles/KQuantizer.dir/main.cpp.o: /home/kanvolu/Documents/Dev_Projects/kquan
   /usr/include/c++/15.1.1/typeinfo \
   /usr/include/c++/15.1.1/vector \
   /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/atomic_word.h \
+  /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/basic_file.h \
   /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/c++allocator.h \
   /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/c++config.h \
+  /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/c++io.h \
   /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/c++locale.h \
   /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/cpu_defines.h \
   /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/ctype_base.h \
@@ -463,6 +468,12 @@ CMakeFiles/KQuantizer.dir/main.cpp.o:
 
 /usr/lib/Scrt1.o:
 
+/usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/include/xmmintrin.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/include/stdint.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/include/stddef.h:
+
 /usr/include/c++/15.1.1/bits/move.h:
 
 /usr/include/c++/15.1.1/bits/basic_ios.tcc:
@@ -477,15 +488,13 @@ CMakeFiles/KQuantizer.dir/main.cpp.o:
 
 /usr/include/c++/15.1.1/vector:
 
-/usr/include/c++/15.1.1/bits/ostream.tcc:
-
-/usr/include/c++/15.1.1/ext/type_traits.h:
-
 /usr/include/c++/15.1.1/bits/cpp_type_traits.h:
 
 /usr/include/c++/15.1.1/bits/charconv.h:
 
 /usr/include/strings.h:
+
+/usr/include/c++/15.1.1/bits/fstream.tcc:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/include/emmintrin.h:
 
@@ -533,8 +542,6 @@ CMakeFiles/KQuantizer.dir/main.cpp.o:
 
 /usr/include/bits/types/struct_sched_param.h:
 
-/usr/include/c++/15.1.1/bits/string_view.tcc:
-
 /usr/include/bits/types/struct_itimerspec.h:
 
 /usr/include/bits/struct_rwlock.h:
@@ -569,6 +576,10 @@ CMakeFiles/KQuantizer.dir/main.cpp.o:
 
 /usr/include/c++/15.1.1/bits/ostream_insert.h:
 
+/usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/include/syslimits.h:
+
+/usr/include/c++/15.1.1/new:
+
 /usr/include/bits/flt-eval-method.h:
 
 /usr/include/bits/libc-header-start.h:
@@ -586,6 +597,8 @@ CMakeFiles/KQuantizer.dir/main.cpp.o:
 /usr/include/c++/15.1.1/bits/locale_facets.h:
 
 /usr/include/c++/15.1.1/bits/streambuf.tcc:
+
+/usr/include/c++/15.1.1/bits/codecvt.h:
 
 /usr/include/bits/timex.h:
 
@@ -637,11 +650,7 @@ CMakeFiles/KQuantizer.dir/main.cpp.o:
 
 /usr/include/stdc-predef.h:
 
-/usr/include/c++/15.1.1/bits/ostream.h:
-
 /usr/include/bits/types/struct_FILE.h:
-
-/usr/include/asm/types.h:
 
 /usr/include/alloca.h:
 
@@ -674,10 +683,6 @@ CMakeFiles/KQuantizer.dir/main.cpp.o:
 /usr/include/asm-generic/errno-base.h:
 
 /usr/include/bits/floatn.h:
-
-/usr/include/c++/15.1.1/new:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/include/syslimits.h:
 
 /usr/include/asm/bitsperlong.h:
 
@@ -779,7 +784,15 @@ CMakeFiles/KQuantizer.dir/main.cpp.o:
 
 /usr/include/c++/15.1.1/bits/stl_iterator.h:
 
+/usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/c++io.h:
+
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/include/stdarg.h:
+
+/usr/include/c++/15.1.1/bits/ostream.h:
+
+/usr/include/c++/15.1.1/bits/ostream.tcc:
+
+/usr/include/c++/15.1.1/ext/type_traits.h:
 
 /usr/include/c++/15.1.1/ostream:
 
@@ -865,6 +878,10 @@ CMakeFiles/KQuantizer.dir/main.cpp.o:
 
 /usr/include/c++/15.1.1/ext/string_conversions.h:
 
+/usr/include/asm/types.h:
+
+/usr/include/c++/15.1.1/fstream:
+
 /usr/include/c++/15.1.1/initializer_list:
 
 /usr/include/bits/types/__sigset_t.h:
@@ -915,6 +932,16 @@ CMakeFiles/KQuantizer.dir/main.cpp.o:
 
 /usr/include/c++/15.1.1/typeinfo:
 
+/usr/include/c++/15.1.1/bits/string_view.tcc:
+
+/usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/basic_file.h:
+
+/usr/lib/libstdc++.so:
+
+/usr/include/c++/15.1.1/bits/memoryfwd.h:
+
+/usr/include/locale.h:
+
 /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/c++allocator.h:
 
 /usr/include/c++/15.1.1/x86_64-pc-linux-gnu/bits/gthr.h:
@@ -947,12 +974,6 @@ CMakeFiles/KQuantizer.dir/main.cpp.o:
 
 /usr/include/linux/types.h:
 
-/usr/lib/libstdc++.so:
-
-/usr/include/c++/15.1.1/bits/memoryfwd.h:
-
-/usr/include/locale.h:
-
 /usr/include/math.h:
 
 /usr/include/pthread.h:
@@ -982,9 +1003,3 @@ CMakeFiles/KQuantizer.dir/main.cpp.o:
 /usr/include/wchar.h:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/include/mm_malloc.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/include/stddef.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/include/stdint.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/15.1.1/include/xmmintrin.h:
