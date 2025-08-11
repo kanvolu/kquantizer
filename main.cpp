@@ -40,7 +40,7 @@ vector<vector<float>> g_kernel(int size, float deviation){
 	return kernel;
 }
 
-// TODO implement convolution of matrices
+// TODO implement convolution of 2d vectors
 
 
 vector<int> parse_colors(const string& line){
@@ -94,14 +94,13 @@ vector<vector<int>> import_palette(const string& file, const string& name){
 	vector<vector<int>> palette;
 	vector<int> color;
 	ifstream raw(file);
-	std::string line;
+	string line;
 	size_t block;
 	
 	while (getline(raw, line)) {
 		line = clean_line(line);
     	block = line.find("["+name+"]"); // find the palette that we are looking for
-    	if (line.empty()){ //if the line is empty just skip to the next one
-    	} else if (block != string::npos){ // if palette is found break out and start parsing the colors
+    	if (block != string::npos){ // if palette is found break out and start parsing the colors
     		break;
     	}
     }
@@ -125,8 +124,44 @@ vector<vector<int>> import_palette(const string& file, const string& name){
 	return palette;
 }
 
-// TODO implement logic to import images properly
+// TODO implement logic to import and export images properly
 // TODO implement kdtree class so we can do nearest neighbor search
+
+vector<vector<vector<int>>> vectorize_img(unsigned char* data, int width, int height){
+	vector<vector<vector<int>>> img; //(height, vector<vector<int>>(width, vector<int>(4, 0)));
+	for (int h = 0; h < height; h++){
+		vector<vector<int>> w_cache;
+		for (int w = 0; w < width; w++){
+			vector<int> c_cache;
+			for (int c = 0; c < 4; c++){
+				c_cache.push_back(static_cast<int>(data[c + (4 * w) + (h * width)]));
+				// img[w][h][c] = static_cast<int>(data[c + (4 * h) + (w * height)]);
+			}
+			w_cache.push_back(c_cache);
+		}
+		img.push_back(w_cache);
+	}
+	return img;
+}
+
+vector<unsigned char> flatten_img(vector<vector<vector<int>>> img){
+	vector<unsigned char> data;
+	for (vector row : img){
+		for (vector color : row){
+			for (int value : color){
+				data.push_back(static_cast<unsigned char>(value));
+			}
+		}
+	}
+	return data;
+}
+
+// vector<vector<int>> save_alpha(unsigned char* img, int width, int height){
+// 	vector<vector<int>> alpha;
+// 	for (int i = 3, i < width * height * 4, i + 4){
+// 		alpha
+// 	}
+// }
 
 int main(){
 	vector<vector<int>> palette = import_palette("../palettes.txt", "debug");
@@ -136,6 +171,33 @@ int main(){
 		}
 		cout << endl;
 	}
+	char const* path = "../lancia.jpeg";
+	// cin >> path;
+	int width, height, channels;
+	unsigned char* data = stbi_load(path, &width, &height, &channels, 4);
+	
+	if (!data) {
+	    cerr << "Failed to load image: " << stbi_failure_reason() << endl;
+	    return 1; // or handle error
+	}
 
+	vector<vector<vector<int>>> img = vectorize_img(data, width, height);
+
+
+	for (int i = 0; i < 4; i++){
+		cout << img[0][1][i] << " ";
+	}
+	cout << endl;
+	vector<unsigned char> out_data = flatten_img(img);
+
+	for (int i = 0; i < 4; i++){
+		cout << static_cast<int>(out_data[i + 4]) << " ";
+	}
+	unsigned error = lodepng::encode("../test.png", out_data, width, height);
+	if (error) {
+        cerr << "Encoder error " << error << ": " << lodepng_error_text(error) << endl;
+        return 1;
+	}
+	    
 	return 0;
 }

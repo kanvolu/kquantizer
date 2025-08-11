@@ -12,5 +12,10 @@ add_executable(KQuantizer
 
 target_compile_features(KQuantizer PRIVATE cxx_std_17)
 
-
 target_include_directories(KQuantizer PRIVATE ${CMAKE_SOURCE_DIR}/include)
+
+add_compile_options(-Wall -g -O0)
+
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()

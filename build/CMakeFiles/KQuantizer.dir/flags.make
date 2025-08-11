@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/kanvolu/Documents/Dev_Projects/kquantizer/include
 
-CXX_FLAGS = 
+CXX_FLAGS = -g
 
