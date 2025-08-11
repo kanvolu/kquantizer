@@ -134,7 +134,7 @@ vector<vector<vector<int>>> vectorize_img(unsigned char* data, int width, int he
 		for (int w = 0; w < width; w++){
 			vector<int> c_cache;
 			for (int c = 0; c < 4; c++){
-				c_cache.push_back(static_cast<int>(data[c + (4 * w) + (h * width)]));
+				c_cache.push_back(static_cast<int>(data[c + (4 * (h * width + w))]));
 				// img[w][h][c] = static_cast<int>(data[c + (4 * h) + (w * height)]);
 			}
 			w_cache.push_back(c_cache);
@@ -185,13 +185,13 @@ int main(){
 
 
 	for (int i = 0; i < 4; i++){
-		cout << img[0][1][i] << " ";
+		cout << img[80][1][i] << " ";
 	}
 	cout << endl;
 	vector<unsigned char> out_data = flatten_img(img);
 
 	for (int i = 0; i < 4; i++){
-		cout << static_cast<int>(out_data[i + 4]) << " ";
+		cout << static_cast<int>(out_data[i + (1 * 4) + (80 * width)]) << " ";
 	}
 	unsigned error = lodepng::encode("../test.png", out_data, width, height);
 	if (error) {
