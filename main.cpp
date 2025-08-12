@@ -12,6 +12,8 @@
 
 using namespace std;
 
+// BLURRING LOGIC
+
 float gaus(float x, float deviation){
 	x = exp(-(x * x) / (2 * deviation * deviation));
 	x = x / (sqrt(2 * M_PI) * deviation);
@@ -42,6 +44,7 @@ vector<vector<float>> g_kernel(int size, float deviation){
 
 // TODO implement convolution of 2d vectors
 
+// PARSING LOGIC
 
 vector<int> parse_colors(const string& line){
 	vector<int> color;
@@ -51,20 +54,18 @@ vector<int> parse_colors(const string& line){
 	int value;
 
 	// TODO make error checking to check if there are any non-numeric values on the line
-	
-	index1 = line.find_first_of("1234567890", index2);
-	index2 = line.find(" ", index1);
-	if (index1 != string::npos && index2 != string::npos){
-		for (int i = 0; i < 3; i++){	
+
+	for (int i = 0; i < 3; i++){
+		index1 = line.find_first_of("1234567890", index2);
+		index2 = line.find_first_of("	 ", index1);
+		if (index1 != string::npos){
 			value_s = line.substr(index1, index2-index1);
 			value = stoi(value_s);
 			color.push_back(value);
-			index1 = line.find_first_of("1234567890", index2);
-			index2 = line.find(" ", index1);
-			}	
-	} else {
-		cout << "COULD NOT PARSE COLORS." << endl;
-		return {};
+		} else {
+			cerr << "COULD NOT PARSE COLORS." << endl;
+			return {};
+		}
 	}
 	return color;
 }
@@ -90,16 +91,16 @@ string clean_line(string line){
 }
 
 
-vector<vector<int>> import_palette(const string& file, const string& name){
+vector<vector<int>> import_palette(const string& file, const string name){
 	vector<vector<int>> palette;
 	vector<int> color;
-	ifstream raw(file);
+ 	ifstream raw(file);
 	string line;
 	size_t block;
 	
 	while (getline(raw, line)) {
 		line = clean_line(line);
-    	block = line.find("["+name+"]"); // find the palette that we are looking for
+    	block = line.find("[" + name + "]"); // find the palette that we are looking for
     	if (block != string::npos){ // if palette is found break out and start parsing the colors
     		break;
     	}
@@ -124,18 +125,18 @@ vector<vector<int>> import_palette(const string& file, const string& name){
 	return palette;
 }
 
-// TODO implement logic to import and export images properly
 // TODO implement kdtree class so we can do nearest neighbor search
 
+// IMPORTING AND EXPORTING LOGIC
+
 vector<vector<vector<int>>> vectorize_img(unsigned char* data, int width, int height){
-	vector<vector<vector<int>>> img; //(height, vector<vector<int>>(width, vector<int>(4, 0)));
+	vector<vector<vector<int>>> img;
 	for (int h = 0; h < height; h++){
 		vector<vector<int>> w_cache;
 		for (int w = 0; w < width; w++){
 			vector<int> c_cache;
 			for (int c = 0; c < 4; c++){
 				c_cache.push_back(static_cast<int>(data[c + (4 * (h * width + w))]));
-				// img[w][h][c] = static_cast<int>(data[c + (4 * h) + (w * height)]);
 			}
 			w_cache.push_back(c_cache);
 		}
@@ -156,21 +157,12 @@ vector<unsigned char> flatten_img(vector<vector<vector<int>>> img){
 	return data;
 }
 
-// vector<vector<int>> save_alpha(unsigned char* img, int width, int height){
-// 	vector<vector<int>> alpha;
-// 	for (int i = 3, i < width * height * 4, i + 4){
-// 		alpha
-// 	}
-// }
+
 
 int main(){
-	vector<vector<int>> palette = import_palette("../palettes.txt", "debug");
-	for (const auto& i : palette){
-		for (int j : i){
-			cout << j << " ";
-		}
-		cout << endl;
-	}
+	// IMPORT
+	vector<vector<int>> palette = import_palette("../palettes.txt", "nord");
+	
 	char const* path = "../lancia.jpeg";
 	// cin >> path;
 	int width, height, channels;
@@ -184,15 +176,9 @@ int main(){
 	vector<vector<vector<int>>> img = vectorize_img(data, width, height);
 
 
-	for (int i = 0; i < 4; i++){
-		cout << img[80][1][i] << " ";
-	}
-	cout << endl;
+	// EXPORT
 	vector<unsigned char> out_data = flatten_img(img);
 
-	for (int i = 0; i < 4; i++){
-		cout << static_cast<int>(out_data[i + (1 * 4) + (80 * width)]) << " ";
-	}
 	unsigned error = lodepng::encode("../test.png", out_data, width, height);
 	if (error) {
         cerr << "Encoder error " << error << ": " << lodepng_error_text(error) << endl;

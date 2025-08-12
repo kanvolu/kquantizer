@@ -3,80 +3,64 @@
 
 using namespace std;
 
-class node{
-private:
+struct node{
+	vector<int> data;
 	int parent;
 	int left;
 	int right;
-	vector<int> color;
-public:
-	node(vector<int> data){
-		color = data;
+
+	node(vector<int> input){
+		data = input;
 	}
 
-	void set_children(int l_child, int r_child){
-		left = l_child;
-		right = r_child;
-	}
+	// auto begin(){return data.begin();}
+	// auto end(){return data.end();}
+	// auto begin() const {return data.begin();}
+	// auto end() const {return data.end();}
 
-	int get_left(){
-		return left;
-	}
-
-	int get_right(){
-		return right;
-	}
-
-	void print(){
-		for (int value : color){
-			cout << value << " ";
-		}
-		cout << endl;
-	}
-
-	int r(){
-		return color[0];
-	}
-
-	int g(){
-		return color[1];
-	}
-
-	int b(){
-		return color[2];
-	}
+	void set_left(int input){left = input;}
+	void set_right(int input){right = input;}
+	void set_parent(int input){parent = input;}
 };
 
-class k3dtree{
+struct kdtree{
 private:
-	vector<node> tree;
-public:
-	k3dtree(vector<vector<int>> palette){
-		for (vector<int> color : palette){
-				
-		}
-	}	
+	vector<node> av_nodes;
 
-	void print(){
-		for (node color : tree){
-			color.print();
+public:
+	vector<node> tree;
+	int dimension;
+
+	kdtree(vector<vector<int>> input){
+		dimension = input[0].size();
+		for (vector point : input){
+			av_nodes.push_back(point);
+		}
+
+		tree.push_back(av_nodes[0]);
+
+		for (int i = 0; i < av_nodes.size(); i++){
+			// left side
+			for (int j = 0; j < av_nodes.size(); j++){
+				if (av_nodes[j].data[0] < tree[i].data[0]){
+					tree.push_back(av_nodes[j]);
+					tree[i].set_left(tree.size() - 1);
+					av_nodes.erase(av_nodes.begin() + j);
+				}
+			}
+			// right side
+			for (int j = 0; j < av_nodes.size(); j++){
+				if (av_nodes[j].data[0] >= tree[i].data[0]){
+					tree.push_back(av_nodes[j]);
+					tree[i].set_right(tree.size() - 1);
+					av_nodes.erase(av_nodes.begin() + j);
+				}
+			}
+
 		}
 	}
 };
 
 int main(){
-	vector<vector<int>> palette;
-	
-	for (int i = 0; i < 5; ++i) {
-		vector<int> color;
-		for (int j = 0; j < 3; ++j) {
-			color.push_back(rand() % 256);
-	    }     
-	    palette.push_back(color);  
-	}
-
-	k3dtree tree_p(palette);
-	tree_p.print();
-	
 	return 0;
 }
