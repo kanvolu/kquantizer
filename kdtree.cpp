@@ -1,66 +1,48 @@
 #include <iostream>
+#include <algorithm>
 #include <vector>
 
 using namespace std;
 
-struct node{
-	vector<int> data;
-	int parent;
-	int left;
-	int right;
-
-	node(vector<int> input){
-		data = input;
-	}
-
-	// auto begin(){return data.begin();}
-	// auto end(){return data.end();}
-	// auto begin() const {return data.begin();}
-	// auto end() const {return data.end();}
-
-	void set_left(int input){left = input;}
-	void set_right(int input){right = input;}
-	void set_parent(int input){parent = input;}
-};
-
 struct kdtree{
-private:
-	vector<node> av_nodes;
+	kdtree* parent = nullptr;
+	kdtree* left = nullptr;
+	kdtree* right = nullptr;
+	vector<int> point;
+	int depth;
 
-public:
-	vector<node> tree;
-	int dimension;
-
-	kdtree(vector<vector<int>> input){
-		dimension = input[0].size();
-		for (vector point : input){
-			av_nodes.push_back(point);
+	kdtree(vector<vector<int>> data, int depth = 0) : depth(depth) {
+		if (data.size() == 0){
+			cerr << "Cannot make a tree out of an empty array." << endl;
 		}
-
-		tree.push_back(av_nodes[0]);
-
-		for (int i = 0; i < av_nodes.size(); i++){
-			// left side
-			for (int j = 0; j < av_nodes.size(); j++){
-				if (av_nodes[j].data[0] < tree[i].data[0]){
-					tree.push_back(av_nodes[j]);
-					tree[i].set_left(tree.size() - 1);
-					av_nodes.erase(av_nodes.begin() + j);
-				}
-			}
-			// right side
-			for (int j = 0; j < av_nodes.size(); j++){
-				if (av_nodes[j].data[0] >= tree[i].data[0]){
-					tree.push_back(av_nodes[j]);
-					tree[i].set_right(tree.size() - 1);
-					av_nodes.erase(av_nodes.begin() + j);
-				}
-			}
-
+		int k;
+		if (depth == 0){
+			k = 0;
+		} else {
+			k = depth % data[0].size();
+		}
+		
+		if (data.size() == 1){
+			point = data[0];
+		} else if (data.size() == 2){
+			sort(data.begin(), data.end(), [k](const auto& a, const auto& b) {
+				return a[k] < b[k];});
+			point = data[0];
+			right = new kdtree({data[1]}, depth + 1);
+		} else{
+			sort(data.begin(), data.end(), [k](const auto& a, const auto& b) {
+				return a[k] < b[k];});
+			int m = data.size()/2;
+			point = data[m];
+			left = new kdtree(vector<vector<int>>(data.begin(), data.begin() + m), depth + 1);
+			right = new kdtree(vector<vector<int>>(data.begin() + m + 1, data.end()), depth + 1);
 		}
 	}
+	
 };
+
 
 int main(){
+	kdtree sus({{1,2,3},{4,5,6},{7,8,9}}, 0);
 	return 0;
 }
