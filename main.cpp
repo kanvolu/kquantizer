@@ -3,6 +3,7 @@
 
 #include "stb_image.h"
 #include "lodepng.h"
+#include "kdtree.h"
 
 #include <iostream>
 #include <vector>
@@ -157,29 +158,51 @@ vector<unsigned char> flatten_img(vector<vector<vector<int>>> img){
 	return data;
 }
 
+string out_name(string const path, string const palette){
+	size_t pos = path.rfind(".");
+	return path.substr(0, pos) + "_" + palette + path.substr(pos);
+}
 
 
-int main(){
+int main(int argc, char* argv[]){
+	// parse arguments
+	char const * file_path = argv[1];
+	string palette_name = argv[2];
+	string output_path = out_name(string(file_path), palette_name);
+		
 	// IMPORT
-	vector<vector<int>> palette = import_palette("../palettes.txt", "nord");
+	vector<vector<int>> palette_raw = import_palette("../palettes.txt", palette_name);
+	kdtree palette(palette_raw);
 	
-	char const* path = "../lancia.jpeg";
+	// char const* path = "../lancia.jpeg";
 	// cin >> path;
 	int width, height, channels;
-	unsigned char* data = stbi_load(path, &width, &height, &channels, 4);
+	unsigned char* data = stbi_load(file_path, &width, &height, &channels, 4);
 	
 	if (!data) {
 	    cerr << "Failed to load image: " << stbi_failure_reason() << endl;
 	    return 1; // or handle error
 	}
+	
+	// vector<vector<vector<int>>> img = vectorize_img(data, width, height);
 
-	vector<vector<vector<int>>> img = vectorize_img(data, width, height);
-
+	vector<int> cur_pixel(3);
+	vector<unsigned char> out_data;
+	for (int i = 0; i < (width * height * 4); i += 4){
+		for (int j = 0; j < 3; j++){
+			cur_pixel[j] = data[i+j];
+		}
+		node nearest = palette.nearest(cur_pixel);
+		for (int j = 0; j < 3; j++){
+			out_data.push_back(nearest[j]);
+		}
+		out_data.push_back(data[i+3]);
+	}
 
 	// EXPORT
-	vector<unsigned char> out_data = flatten_img(img);
+	// vector<unsigned char> out_data = flatten_img(img);
 
-	unsigned error = lodepng::encode("../test.png", out_data, width, height);
+	unsigned error = lodepng::encode(output_path, out_data, width, height);
 	if (error) {
         cerr << "Encoder error " << error << ": " << lodepng_error_text(error) << endl;
         return 1;

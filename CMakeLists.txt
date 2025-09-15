@@ -8,6 +8,7 @@ project(KQuantizer)
 add_executable(KQuantizer
     main.cpp
     src/lodepng.cpp
+    src/kdtree.cpp
 )
 
 target_compile_features(KQuantizer PRIVATE cxx_std_17)
