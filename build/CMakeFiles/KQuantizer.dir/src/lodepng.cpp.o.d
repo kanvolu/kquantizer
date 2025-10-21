@@ -1,7 +1,7 @@
 CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o: \
- /home/kanvolu/Documents/Dev_Projects/kquantizer/src/lodepng.cpp \
+ /home/kanvolu/Documents/Dev_Projects/kquantizer_1/src/lodepng.cpp \
  /usr/include/stdc-predef.h \
- /home/kanvolu/Documents/Dev_Projects/kquantizer/include/lodepng.h \
+ /home/kanvolu/Documents/Dev_Projects/kquantizer_1/include/lodepng.h \
  /usr/include/string.h /usr/include/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
  /usr/include/bits/wordsize.h /usr/include/bits/timesize.h \

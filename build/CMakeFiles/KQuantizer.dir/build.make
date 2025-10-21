@@ -53,10 +53,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/kanvolu/Documents/Dev_Projects/kquantizer
+CMAKE_SOURCE_DIR = /home/kanvolu/Documents/Dev_Projects/kquantizer_1
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/kanvolu/Documents/Dev_Projects/kquantizer/build
+CMAKE_BINARY_DIR = /home/kanvolu/Documents/Dev_Projects/kquantizer_1/build
 
 # Include any dependencies generated for this target.
 include CMakeFiles/KQuantizer.dir/depend.make
@@ -73,46 +73,46 @@ CMakeFiles/KQuantizer.dir/codegen:
 .PHONY : CMakeFiles/KQuantizer.dir/codegen
 
 CMakeFiles/KQuantizer.dir/main.cpp.o: CMakeFiles/KQuantizer.dir/flags.make
-CMakeFiles/KQuantizer.dir/main.cpp.o: /home/kanvolu/Documents/Dev_Projects/kquantizer/main.cpp
+CMakeFiles/KQuantizer.dir/main.cpp.o: /home/kanvolu/Documents/Dev_Projects/kquantizer_1/main.cpp
 CMakeFiles/KQuantizer.dir/main.cpp.o: CMakeFiles/KQuantizer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/KQuantizer.dir/main.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/KQuantizer.dir/main.cpp.o -MF CMakeFiles/KQuantizer.dir/main.cpp.o.d -o CMakeFiles/KQuantizer.dir/main.cpp.o -c /home/kanvolu/Documents/Dev_Projects/kquantizer/main.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kanvolu/Documents/Dev_Projects/kquantizer_1/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_1) "Building CXX object CMakeFiles/KQuantizer.dir/main.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/KQuantizer.dir/main.cpp.o -MF CMakeFiles/KQuantizer.dir/main.cpp.o.d -o CMakeFiles/KQuantizer.dir/main.cpp.o -c /home/kanvolu/Documents/Dev_Projects/kquantizer_1/main.cpp
 
 CMakeFiles/KQuantizer.dir/main.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/KQuantizer.dir/main.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kanvolu/Documents/Dev_Projects/kquantizer/main.cpp > CMakeFiles/KQuantizer.dir/main.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kanvolu/Documents/Dev_Projects/kquantizer_1/main.cpp > CMakeFiles/KQuantizer.dir/main.cpp.i
 
 CMakeFiles/KQuantizer.dir/main.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/KQuantizer.dir/main.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kanvolu/Documents/Dev_Projects/kquantizer/main.cpp -o CMakeFiles/KQuantizer.dir/main.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kanvolu/Documents/Dev_Projects/kquantizer_1/main.cpp -o CMakeFiles/KQuantizer.dir/main.cpp.s
 
 CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o: CMakeFiles/KQuantizer.dir/flags.make
-CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o: /home/kanvolu/Documents/Dev_Projects/kquantizer/src/lodepng.cpp
+CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o: /home/kanvolu/Documents/Dev_Projects/kquantizer_1/src/lodepng.cpp
 CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o: CMakeFiles/KQuantizer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o -MF CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o.d -o CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o -c /home/kanvolu/Documents/Dev_Projects/kquantizer/src/lodepng.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kanvolu/Documents/Dev_Projects/kquantizer_1/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Building CXX object CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o -MF CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o.d -o CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o -c /home/kanvolu/Documents/Dev_Projects/kquantizer_1/src/lodepng.cpp
 
 CMakeFiles/KQuantizer.dir/src/lodepng.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/KQuantizer.dir/src/lodepng.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kanvolu/Documents/Dev_Projects/kquantizer/src/lodepng.cpp > CMakeFiles/KQuantizer.dir/src/lodepng.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kanvolu/Documents/Dev_Projects/kquantizer_1/src/lodepng.cpp > CMakeFiles/KQuantizer.dir/src/lodepng.cpp.i
 
 CMakeFiles/KQuantizer.dir/src/lodepng.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/KQuantizer.dir/src/lodepng.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kanvolu/Documents/Dev_Projects/kquantizer/src/lodepng.cpp -o CMakeFiles/KQuantizer.dir/src/lodepng.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kanvolu/Documents/Dev_Projects/kquantizer_1/src/lodepng.cpp -o CMakeFiles/KQuantizer.dir/src/lodepng.cpp.s
 
 CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o: CMakeFiles/KQuantizer.dir/flags.make
-CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o: /home/kanvolu/Documents/Dev_Projects/kquantizer/src/kdtree.cpp
+CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o: /home/kanvolu/Documents/Dev_Projects/kquantizer_1/src/kdtree.cpp
 CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o: CMakeFiles/KQuantizer.dir/compiler_depend.ts
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o -MF CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o.d -o CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o -c /home/kanvolu/Documents/Dev_Projects/kquantizer/src/kdtree.cpp
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --progress-dir=/home/kanvolu/Documents/Dev_Projects/kquantizer_1/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_3) "Building CXX object CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o"
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -MD -MT CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o -MF CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o.d -o CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o -c /home/kanvolu/Documents/Dev_Projects/kquantizer_1/src/kdtree.cpp
 
 CMakeFiles/KQuantizer.dir/src/kdtree.cpp.i: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Preprocessing CXX source to CMakeFiles/KQuantizer.dir/src/kdtree.cpp.i"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kanvolu/Documents/Dev_Projects/kquantizer/src/kdtree.cpp > CMakeFiles/KQuantizer.dir/src/kdtree.cpp.i
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -E /home/kanvolu/Documents/Dev_Projects/kquantizer_1/src/kdtree.cpp > CMakeFiles/KQuantizer.dir/src/kdtree.cpp.i
 
 CMakeFiles/KQuantizer.dir/src/kdtree.cpp.s: cmake_force
 	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green "Compiling CXX source to assembly CMakeFiles/KQuantizer.dir/src/kdtree.cpp.s"
-	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kanvolu/Documents/Dev_Projects/kquantizer/src/kdtree.cpp -o CMakeFiles/KQuantizer.dir/src/kdtree.cpp.s
+	/usr/bin/c++ $(CXX_DEFINES) $(CXX_INCLUDES) $(CXX_FLAGS) -S /home/kanvolu/Documents/Dev_Projects/kquantizer_1/src/kdtree.cpp -o CMakeFiles/KQuantizer.dir/src/kdtree.cpp.s
 
 # Object files for target KQuantizer
 KQuantizer_OBJECTS = \
@@ -129,7 +129,7 @@ KQuantizer: CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o
 KQuantizer: CMakeFiles/KQuantizer.dir/build.make
 KQuantizer: CMakeFiles/KQuantizer.dir/compiler_depend.ts
 KQuantizer: CMakeFiles/KQuantizer.dir/link.txt
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable KQuantizer"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --green --bold --progress-dir=/home/kanvolu/Documents/Dev_Projects/kquantizer_1/build/CMakeFiles --progress-num=$(CMAKE_PROGRESS_4) "Linking CXX executable KQuantizer"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/KQuantizer.dir/link.txt --verbose=$(VERBOSE)
 
 # Rule to build all files generated by this target.
@@ -141,6 +141,6 @@ CMakeFiles/KQuantizer.dir/clean:
 .PHONY : CMakeFiles/KQuantizer.dir/clean
 
 CMakeFiles/KQuantizer.dir/depend:
-	cd /home/kanvolu/Documents/Dev_Projects/kquantizer/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/kanvolu/Documents/Dev_Projects/kquantizer /home/kanvolu/Documents/Dev_Projects/kquantizer /home/kanvolu/Documents/Dev_Projects/kquantizer/build /home/kanvolu/Documents/Dev_Projects/kquantizer/build /home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles/KQuantizer.dir/DependInfo.cmake "--color=$(COLOR)"
+	cd /home/kanvolu/Documents/Dev_Projects/kquantizer_1/build && $(CMAKE_COMMAND) -E cmake_depends "Unix Makefiles" /home/kanvolu/Documents/Dev_Projects/kquantizer_1 /home/kanvolu/Documents/Dev_Projects/kquantizer_1 /home/kanvolu/Documents/Dev_Projects/kquantizer_1/build /home/kanvolu/Documents/Dev_Projects/kquantizer_1/build /home/kanvolu/Documents/Dev_Projects/kquantizer_1/build/CMakeFiles/KQuantizer.dir/DependInfo.cmake "--color=$(COLOR)"
 .PHONY : CMakeFiles/KQuantizer.dir/depend
 

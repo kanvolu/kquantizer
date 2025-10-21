@@ -1,9 +1,25 @@
 #define _USE_MATH_DEFINE
 #define STB_IMAGE_IMPLEMENTATION
 
-#include "stb_image.h"
-#include "lodepng.h"
-#include "kdtree.h"
+ 
+#define REQUIRED_ARGS \
+	REQUIRED_STRING_ARG(input_file, "input", "Input file path") \
+	REQUIRED_FLOAT_ARG(blur_sigma, "blur_sigma", "Value of sigma for the small sigma used in DOG edge detection")
+
+#define BOOLEAN_ARGS \
+    BOOLEAN_ARG(help, "-h", "Show help")
+
+
+// #ifdef __cplusplus
+// extern "C" {  
+// #endif  
+
+#include "easyargs.h"
+
+// 
+// #ifdef __cplusplus  
+// }  
+// #endif
 
 #include <iostream>
 #include <vector>
@@ -11,41 +27,45 @@
 #include <fstream>
 #include <string>
 
+#include "stb_image.h"
+#include "lodepng.h"
+#include "kdtree.h"
+
+#include "src/blur.cpp"
+
 using namespace std;
 
-// BLURRING LOGIC
-
-float gaus(float x, float deviation){
-	x = exp(-(x * x) / (2 * deviation * deviation));
-	x = x / (sqrt(2 * M_PI) * deviation);
-	return x;
-}
-
-
-vector<vector<float>> g_kernel(int size, float deviation){
-	vector<vector<float>> kernel(size, vector<float>(size, 0));
-	float dist;
-	float sum = 0;
-	int cen = (size - 1) / 2;
-	for (int i = 0; i < size; i++){
-		for (int j = 0; j < size; j++){
-			dist = sqrt(pow(i - cen, 2) + pow(j - cen, 2));
-			kernel[i][j] = gaus(dist, deviation);
-			sum += kernel[i][j];
-		}
-	}
-	
-	for (int i = 0; i < size; i++){ // normalize kernel
-		for (int j = 0; j < size; j++){
-			kernel[i][j] /= sum;
-		}
-	}
-	return kernel;
-}
-
-// TODO implement convolution of 2d vectors
 
 // PARSING LOGIC
+
+vector<vector<int>> greyscale(vector<vector<vector<int>>> const mat){
+	vector<vector<int>> out(mat.size(), vector<int>(mat[0].size(), 0));
+
+
+	for (int i = 0; i < out.size(); i++){
+		for (int j = 0; j < out[0].size(); j++){
+			int cache = 0;
+			for (int c = 0; c < mat[0][0].size() - 1; c++){
+				cache += mat[i][j][c];
+			}
+
+			out[i][j] = cache / (mat[0][0].size() - 1);
+
+		}
+	}
+
+
+	// cout << "Greyscale: \n";
+	// for (int i = 200; i < 210; i++){
+	// 	for (int j = 200; j < 210; j++){
+	// 		cout << out[i][j] << " ";
+	// 		
+	// 	}
+	// 	cout << "\n";
+	// }
+
+	return out;
+}
 
 vector<int> parse_colors(const string& line){
 	vector<int> color;
@@ -126,8 +146,6 @@ vector<vector<int>> import_palette(const string& file, const string name){
 	return palette;
 }
 
-// TODO implement kdtree class so we can do nearest neighbor search
-
 // IMPORTING AND EXPORTING LOGIC
 
 vector<vector<vector<int>>> vectorize_img(unsigned char* data, int width, int height){
@@ -144,6 +162,28 @@ vector<vector<vector<int>>> vectorize_img(unsigned char* data, int width, int he
 		img.push_back(w_cache);
 	}
 	return img;
+}
+
+void splitting(vector<vector<vector<int>>> const img, vector<vector<int>> * r, vector<vector<int>> * g, vector<vector<int>> * b){
+	for (int i = 0; i < img.size(); i++){
+		for (int j = 0; j < img[i].size(); j++){
+			(*r)[i][j] = img[i][j][0];
+			(*g)[i][j] = img[i][j][1];
+			(*b)[i][j] = img[i][j][2];
+		}
+	}
+}
+
+vector<vector<vector<int>>> combine(vector<vector<int>> const *r, vector<vector<int>> const *g, vector<vector<int>> const *b){
+	vector<vector<vector<int>>> out((*r).size(), vector<vector<int>>((*r)[0].size(), vector<int>(4, 255)));
+	for (int i = 0; i < out.size(); i++){
+		for (int j = 0; j < out[i].size(); j++){
+			 out[i][j][0] = (*r)[i][j];
+			 out[i][j][1] = (*g)[i][j];
+			 out[i][j][2] = (*b)[i][j];
+		}
+	}
+	return out;
 }
 
 vector<unsigned char> flatten_img(vector<vector<vector<int>>> img){
@@ -166,46 +206,71 @@ string out_name(string const path, string const palette){
 
 int main(int argc, char* argv[]){
 	// parse arguments
-	char const * file_path = argv[1];
-	string palette_name = argv[2];
-	string output_path = out_name(string(file_path), palette_name);
+
+	args_t args = make_default_args();
+	parse_args(argc, argv, &args);
+
+	// if (!parse_args(argc, argv, &args) || args.help) {
+ //        print_help(argv[0]);
+ //        return 1;
+ //    }
+
+	float s_sigma = args.blur_sigma;
+	float b_sigma = 1.6 * s_sigma;
+	int kernel_radius = 3 * b_sigma;
+ 	string output_file = out_name(string(args.input_file), "dog");
+
+ 	
 		
 	// IMPORT
-	vector<vector<int>> palette_raw = import_palette("../palettes.txt", palette_name);
-	kdtree palette(palette_raw);
+	// vector<vector<int>> palette_raw = import_palette("../palettes.txt", palette_name);
+	// kdtree palette(palette_raw);
 	
-	// char const* path = "../lancia.jpeg";
-	// cin >> path;
 	int width, height, channels;
-	unsigned char* data = stbi_load(file_path, &width, &height, &channels, 4);
+	unsigned char* data = stbi_load(args.input_file, &width, &height, &channels, 4);
 	
 	if (!data) {
 	    cerr << "Failed to load image: " << stbi_failure_reason() << endl;
 	    return 1; // or handle error
 	}
 	
-	// vector<vector<vector<int>>> img = vectorize_img(data, width, height);
+	vector<vector<vector<int>>> const img = vectorize_img(data, width, height);
 
-	vector<int> cur_pixel(3);
-	vector<unsigned char> out_data;
-	for (int i = 0; i < (width * height * 4); i += 4){
-		for (int j = 0; j < 3; j++){
-			cur_pixel[j] = data[i+j];
+	// cout << "Size: " << img.size() << "x" << img[0].size() << "x" << img[0][0].size() << endl;
+
+	
+	
+	vector<vector<int>> red (img.size(), vector<int>(img[0].size()));
+	vector<vector<int>> blue (img.size(), vector<int>(img[0].size()));
+	vector<vector<int>> green (img.size(), vector<int>(img[0].size()));
+
+	splitting(img, &red, &green, &blue);
+
+	vector<vector<float>> kernel = g_kernel(2 * kernel_radius + 1, s_sigma);
+
+
+	vector<vector<int>> dog_img = dog(greyscale(img), s_sigma);
+	// 
+	// red = convolve(red, kernel);
+	// green = convolve(green, kernel);
+	// blue = convolve(blue, kernel);
+	
+
+	// vector<vector<vector<int>>> dog_out = combine(&red, &green, &blue);
+	vector<vector<vector<int>>> dog_out = img;
+
+	for (int i = 0; i < dog_out.size(); i++){
+		for (int j = 0; j < dog_out[0].size(); j++){
+			for (int c = 0; c < dog_out[0][0].size() - 1; c++){
+				dog_out[i][j][c] = dog_img[i][j];
+			}
 		}
-		node nearest = palette.nearest(cur_pixel);
-		for (int j = 0; j < 3; j++){
-			out_data.push_back(nearest[j]);
-		}
-		out_data.push_back(data[i+3]);
 	}
 
-	// EXPORT
-	// vector<unsigned char> out_data = flatten_img(img);
+	unsigned error = lodepng::encode(output_file, flatten_img(dog_out), width, height);
 
-	unsigned error = lodepng::encode(output_path, out_data, width, height);
-	if (error) {
-        cerr << "Encoder error " << error << ": " << lodepng_error_text(error) << endl;
-        return 1;
+	if(error) {
+		cerr << "encoder error " << error << ": "<< lodepng_error_text(error) << endl;
 	}
 	    
 	return 0;
