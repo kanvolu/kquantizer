@@ -54,10 +54,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/kanvolu/Documents/Dev_Projects/kquantizer_1
+CMAKE_SOURCE_DIR = /home/kanvolu/Documents/Dev_Projects/kquantizer
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/kanvolu/Documents/Dev_Projects/kquantizer_1/build
+CMAKE_BINARY_DIR = /home/kanvolu/Documents/Dev_Projects/kquantizer/build
 
 #=============================================================================
 # Directory level rules for the build root directory
@@ -85,14 +85,14 @@ clean: CMakeFiles/KQuantizer.dir/clean
 CMakeFiles/KQuantizer.dir/all:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQuantizer.dir/build.make CMakeFiles/KQuantizer.dir/depend
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQuantizer.dir/build.make CMakeFiles/KQuantizer.dir/build
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/kanvolu/Documents/Dev_Projects/kquantizer_1/build/CMakeFiles --progress-num=1,2,3,4 "Built target KQuantizer"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles --progress-num=1,2,3 "Built target KQuantizer"
 .PHONY : CMakeFiles/KQuantizer.dir/all
 
 # Build rule for subdir invocation for target.
 CMakeFiles/KQuantizer.dir/rule: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/kanvolu/Documents/Dev_Projects/kquantizer_1/build/CMakeFiles 4
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles 3
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 CMakeFiles/KQuantizer.dir/all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/kanvolu/Documents/Dev_Projects/kquantizer_1/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles 0
 .PHONY : CMakeFiles/KQuantizer.dir/rule
 
 # Convenience name for target.
@@ -102,7 +102,7 @@ KQuantizer: CMakeFiles/KQuantizer.dir/rule
 # codegen rule for target.
 CMakeFiles/KQuantizer.dir/codegen:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQuantizer.dir/build.make CMakeFiles/KQuantizer.dir/codegen
-	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/kanvolu/Documents/Dev_Projects/kquantizer_1/build/CMakeFiles --progress-num=1,2,3,4 "Finished codegen for target KQuantizer"
+	@$(CMAKE_COMMAND) -E cmake_echo_color "--switch=$(COLOR)" --progress-dir=/home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles --progress-num=1,2,3 "Finished codegen for target KQuantizer"
 .PHONY : CMakeFiles/KQuantizer.dir/codegen
 
 # clean rule for target.

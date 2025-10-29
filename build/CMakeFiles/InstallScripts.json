@@ -1,7 +1,7 @@
 {
 	"InstallScripts" : 
 	[
-		"/home/kanvolu/Documents/Dev_Projects/kquantizer_1/build/cmake_install.cmake"
+		"/home/kanvolu/Documents/Dev_Projects/kquantizer/build/cmake_install.cmake"
 	],
 	"Parallel" : false
 }

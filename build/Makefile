@@ -57,10 +57,10 @@ RM = /usr/bin/cmake -E rm -f
 EQUALS = =
 
 # The top-level source directory on which CMake was run.
-CMAKE_SOURCE_DIR = /home/kanvolu/Documents/Dev_Projects/kquantizer_1
+CMAKE_SOURCE_DIR = /home/kanvolu/Documents/Dev_Projects/kquantizer
 
 # The top-level build directory on which CMake was run.
-CMAKE_BINARY_DIR = /home/kanvolu/Documents/Dev_Projects/kquantizer_1/build
+CMAKE_BINARY_DIR = /home/kanvolu/Documents/Dev_Projects/kquantizer/build
 
 #=============================================================================
 # Targets provided globally by CMake.
@@ -87,9 +87,9 @@ rebuild_cache/fast: rebuild_cache
 
 # The main all target
 all: cmake_check_build_system
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/kanvolu/Documents/Dev_Projects/kquantizer_1/build/CMakeFiles /home/kanvolu/Documents/Dev_Projects/kquantizer_1/build//CMakeFiles/progress.marks
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles /home/kanvolu/Documents/Dev_Projects/kquantizer/build//CMakeFiles/progress.marks
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 all
-	$(CMAKE_COMMAND) -E cmake_progress_start /home/kanvolu/Documents/Dev_Projects/kquantizer_1/build/CMakeFiles 0
+	$(CMAKE_COMMAND) -E cmake_progress_start /home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles 0
 .PHONY : all
 
 # The main clean target
@@ -177,30 +177,6 @@ src/kdtree.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQuantizer.dir/build.make CMakeFiles/KQuantizer.dir/src/kdtree.cpp.s
 .PHONY : src/kdtree.cpp.s
 
-src/lodepng.o: src/lodepng.cpp.o
-.PHONY : src/lodepng.o
-
-# target to build an object file
-src/lodepng.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQuantizer.dir/build.make CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o
-.PHONY : src/lodepng.cpp.o
-
-src/lodepng.i: src/lodepng.cpp.i
-.PHONY : src/lodepng.i
-
-# target to preprocess a source file
-src/lodepng.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQuantizer.dir/build.make CMakeFiles/KQuantizer.dir/src/lodepng.cpp.i
-.PHONY : src/lodepng.cpp.i
-
-src/lodepng.s: src/lodepng.cpp.s
-.PHONY : src/lodepng.s
-
-# target to generate assembly for a file
-src/lodepng.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQuantizer.dir/build.make CMakeFiles/KQuantizer.dir/src/lodepng.cpp.s
-.PHONY : src/lodepng.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -216,9 +192,6 @@ help:
 	@echo "... src/kdtree.o"
 	@echo "... src/kdtree.i"
 	@echo "... src/kdtree.s"
-	@echo "... src/lodepng.o"
-	@echo "... src/lodepng.i"
-	@echo "... src/lodepng.s"
 .PHONY : help
 
 

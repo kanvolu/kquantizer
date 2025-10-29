@@ -7,7 +7,6 @@ project(KQuantizer)
 
 add_executable(KQuantizer
     main.cpp
-    src/lodepng.cpp
     src/kdtree.cpp
 )
 

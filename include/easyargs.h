@@ -29,8 +29,9 @@
 #define REQUIRED_DOUBLE_ARG(name, label, description) REQUIRED_ARG(double, name, label, description, atof)
 
 // OPTIONAL_ARG(type, name, default, flag, label, description, formatter, parser)
-#define OPTIONAL_STRING_ARG(name, default, flag, label, description) OPTIONAL_ARG(char*, name, default, flag, label, description, "%s", )
+#define OPTIONAL_STRING_ARG(name, default, flag, label, description) OPTIONAL_ARG(const char*, name, default, flag, label, description, "%s", )
 #define OPTIONAL_CHAR_ARG(name, default, flag, label, description) OPTIONAL_ARG(char, name, default, flag, label, description, "%c", parse_char)
+#define OPTIONAL_UCHAR_ARG(name, default, flag, label, description) OPTIONAL_ARG(unsigned char, name, default, flag, label, description, "%c", parse_char)
 #define OPTIONAL_INT_ARG(name, default, flag, label, description) OPTIONAL_ARG(int, name, default, flag, label, description, "%d", atoi)
 #define OPTIONAL_UINT_ARG(name, default, flag, label, description) OPTIONAL_ARG(unsigned int, name, default, flag, label, description, "%u", atoi)
 #define OPTIONAL_LONG_ARG(name, default, flag, label, description) OPTIONAL_ARG(long, name, default, flag, label, description, "%ld", atol)

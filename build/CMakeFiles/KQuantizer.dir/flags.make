@@ -4,7 +4,7 @@
 # compile CXX with /usr/bin/c++
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/home/kanvolu/Documents/Dev_Projects/kquantizer_1/include
+CXX_INCLUDES = -I/home/kanvolu/Documents/Dev_Projects/kquantizer/include
 
 CXX_FLAGS = -g
 

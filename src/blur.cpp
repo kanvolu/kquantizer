@@ -36,7 +36,7 @@ vector<vector<float>> g_kernel(int size, float deviation){
 	return kernel;
 }
 
-int colapse(vector<vector<int>> const mat, vector<vector<float>> kernel){
+unsigned char colapse(vector<vector<unsigned char>> const mat, vector<vector<float>> kernel){
 	float sum = 0;
 	
 	if (mat.size() != kernel.size() || mat[0].size() != kernel[0].size()){
@@ -46,26 +46,26 @@ int colapse(vector<vector<int>> const mat, vector<vector<float>> kernel){
 	
 	for (int i = 0; i < mat.size(); i++){
 		for (int j = 0; j < mat[0].size(); j++){
-			sum += mat[i][j] * kernel[i][j];
+			sum += static_cast<float>(mat[i][j]) * kernel[i][j];
 		}
 	}
-	return static_cast<int>(sum);
+	return static_cast<unsigned char>(sum);
 }
 
-vector<vector<int>> pad(vector<vector<int>> mat, int padding){
+vector<vector<unsigned char>> pad(vector<vector<unsigned char>> mat, int padding){
 	for (auto& row : mat){
 		row.insert(row.begin(), padding, 0);
 		row.insert(row.end(), padding, 0);
 	}
 
-	mat.insert(mat.begin(), padding, vector<int>(mat[0].size(), 0));
-	mat.insert(mat.end(), padding, vector<int>(mat[0].size(), 0));
+	mat.insert(mat.begin(), padding, vector<unsigned char>(mat[0].size(), 0));
+	mat.insert(mat.end(), padding, vector<unsigned char>(mat[0].size(), 0));
 	
 	return mat;
 }
 
-vector<vector<int>> slice(vector<vector<int>> const *mat, int start_x, int start_y, int size){
-	vector<vector<int>> out(size, vector<int>(size));
+vector<vector<unsigned char>> slice(vector<vector<unsigned char>> const *mat, int start_x, int start_y, int size){
+	vector<vector<unsigned char>> out(size, vector<unsigned char>(size));
 	
 	for (int i = 0; i < size; i++){
 		for (int j = 0; j < size; j++){
@@ -76,9 +76,9 @@ vector<vector<int>> slice(vector<vector<int>> const *mat, int start_x, int start
 	return out;
 }
 
-vector<vector<int>> convolve(vector<vector<int>> const mat, vector<vector<float>> const kernel){
-	vector<vector<int>> padded = pad(mat, kernel.size()/2);
-	vector<vector<int>> out = mat;
+vector<vector<unsigned char>> convolve(vector<vector<unsigned char>> const mat, vector<vector<float>> const kernel){
+	vector<vector<unsigned char>> padded = pad(mat, kernel.size()/2);
+	vector<vector<unsigned char>> out = mat;
 	
 	for (int i = 0; i < out.size(); i++){
 		for (int j = 0; j < out[0].size(); j++){
@@ -98,17 +98,17 @@ vector<vector<int>> convolve(vector<vector<int>> const mat, vector<vector<float>
 	return out;
 }
 
-vector<vector<int>> dog(vector<vector<int>> const mat, float s_sigma){
+vector<vector<unsigned char>> dog(vector<vector<unsigned char>> const mat, float s_sigma){
 	float b_sigma = 1.6 * s_sigma;
 	int kernel_radius = 3 * b_sigma;
-	vector<vector<int>> out(mat.size(), vector<int>(mat[0].size()));
+	vector<vector<unsigned char>> out(mat.size(), vector<unsigned char>(mat[0].size()));
 
 	// cout << "Small sigma: " << s_sigma << "\nBig sigma: " << b_sigma << "\nRadius: " << kernel_radius << endl;
 
-	vector<vector<int>> blurred_big_sigma = convolve(mat, g_kernel(2 * kernel_radius + 1, b_sigma));
-	vector<vector<int>> blurred_small_sigma = convolve(mat, g_kernel(2 * kernel_radius + 1, s_sigma));
+	vector<vector<unsigned char>> blurred_big_sigma = convolve(mat, g_kernel(2 * kernel_radius + 1, b_sigma));
+	vector<vector<unsigned char>> blurred_small_sigma = convolve(mat, g_kernel(2 * kernel_radius + 1, s_sigma));
 
-	int max = 0;
+	unsigned char max = 0;
 	
 	for (int i = 0; i < out.size(); i++){
 		for (int j = 0; j < out[0].size(); j++){

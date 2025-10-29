@@ -1,1 +1,1 @@
-/usr/bin/c++ -g -Wl,--dependency-file=CMakeFiles/KQuantizer.dir/link.d CMakeFiles/KQuantizer.dir/main.cpp.o CMakeFiles/KQuantizer.dir/src/lodepng.cpp.o CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o -o KQuantizer
+/usr/bin/c++ -g -Wl,--dependency-file=CMakeFiles/KQuantizer.dir/link.d CMakeFiles/KQuantizer.dir/main.cpp.o CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o -o KQuantizer

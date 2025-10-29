@@ -1,7 +1,7 @@
 CMakeFiles/KQuantizer.dir/main.cpp.o: \
- /home/kanvolu/Documents/Dev_Projects/kquantizer_1/main.cpp \
+ /home/kanvolu/Documents/Dev_Projects/kquantizer/main.cpp \
  /usr/include/stdc-predef.h \
- /home/kanvolu/Documents/Dev_Projects/kquantizer_1/include/easyargs.h \
+ /home/kanvolu/Documents/Dev_Projects/kquantizer/include/easyargs.h \
  /usr/include/stdio.h /usr/include/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
  /usr/include/bits/wordsize.h /usr/include/bits/timesize.h \
@@ -170,11 +170,19 @@ CMakeFiles/KQuantizer.dir/main.cpp.o: \
  /usr/include/c++/15.2.1/tr1/poly_hermite.tcc \
  /usr/include/c++/15.2.1/tr1/poly_laguerre.tcc \
  /usr/include/c++/15.2.1/tr1/riemann_zeta.tcc \
+ /usr/include/c++/15.2.1/algorithm \
+ /usr/include/c++/15.2.1/bits/stl_algo.h \
+ /usr/include/c++/15.2.1/bits/algorithmfwd.h \
+ /usr/include/c++/15.2.1/bits/stl_heap.h \
+ /usr/include/c++/15.2.1/bits/uniform_int_dist.h \
+ /usr/include/c++/15.2.1/bits/stl_tempbuf.h \
+ /usr/include/c++/15.2.1/pstl/glue_algorithm_defs.h \
+ /usr/include/c++/15.2.1/pstl/execution_defs.h \
  /usr/include/c++/15.2.1/fstream /usr/include/c++/15.2.1/bits/codecvt.h \
  /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/basic_file.h \
  /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/c++io.h \
  /usr/include/c++/15.2.1/bits/fstream.tcc \
- /home/kanvolu/Documents/Dev_Projects/kquantizer_1/include/stb_image.h \
+ /home/kanvolu/Documents/Dev_Projects/kquantizer/include/stb_image.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/limits.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/syslimits.h \
  /usr/include/limits.h /usr/include/bits/posix1_lim.h \
@@ -189,14 +197,6 @@ CMakeFiles/KQuantizer.dir/main.cpp.o: \
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/xmmintrin.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/mmintrin.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/mm_malloc.h \
- /home/kanvolu/Documents/Dev_Projects/kquantizer_1/include/lodepng.h \
- /home/kanvolu/Documents/Dev_Projects/kquantizer_1/include/kdtree.h \
- /usr/include/c++/15.2.1/algorithm \
- /usr/include/c++/15.2.1/bits/stl_algo.h \
- /usr/include/c++/15.2.1/bits/algorithmfwd.h \
- /usr/include/c++/15.2.1/bits/stl_heap.h \
- /usr/include/c++/15.2.1/bits/uniform_int_dist.h \
- /usr/include/c++/15.2.1/bits/stl_tempbuf.h \
- /usr/include/c++/15.2.1/pstl/glue_algorithm_defs.h \
- /usr/include/c++/15.2.1/pstl/execution_defs.h \
- /home/kanvolu/Documents/Dev_Projects/kquantizer_1/src/blur.cpp
+ /home/kanvolu/Documents/Dev_Projects/kquantizer/include/stb_image_write.h \
+ /home/kanvolu/Documents/Dev_Projects/kquantizer/include/kdtree.h \
+ /home/kanvolu/Documents/Dev_Projects/kquantizer/src/blur.cpp

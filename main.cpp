@@ -1,34 +1,41 @@
 #define _USE_MATH_DEFINE
 #define STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 
  
 #define REQUIRED_ARGS \
 	REQUIRED_STRING_ARG(input_file, "input", "Input file path") \
-	REQUIRED_FLOAT_ARG(blur_sigma, "blur_sigma", "Value of sigma for the small sigma used in DOG edge detection")
+	REQUIRED_STRING_ARG(mode, "mode", "Mode for quantization, options are: search, equidistant, self, self-sort")
+#define OPTIONAL_ARGS \
+    OPTIONAL_STRING_ARG(palette, "nord", "-p", "palette", "Palette used for search and equidistant modes") \
+    OPTIONAL_UINT_ARG(resolution, 8, "-r", "resolution", "Amount of colors for self and self-sort modes") \
+    OPTIONAL_STRING_ARG(output_file, "", "-o", "output", "Output file path") \
 
 #define BOOLEAN_ARGS \
-    BOOLEAN_ARG(help, "-h", "Show help")
+    BOOLEAN_ARG(help, "-h", "Show help") \
+    
 
 
-// #ifdef __cplusplus
-// extern "C" {  
-// #endif  
+#ifdef __cplusplus
+extern "C" {  
+#endif  
 
 #include "easyargs.h"
 
-// 
-// #ifdef __cplusplus  
-// }  
-// #endif
+
+#ifdef __cplusplus  
+}  
+#endif
 
 #include <iostream>
 #include <vector>
 #include <cmath>
+#include <algorithm>
 #include <fstream>
 #include <string>
 
 #include "stb_image.h"
-#include "lodepng.h"
+#include "stb_image_write.h"
 #include "kdtree.h"
 
 #include "src/blur.cpp"
@@ -36,43 +43,14 @@
 using namespace std;
 
 
-// PARSING LOGIC
+// PALETTE PARSING LOGIC
 
-vector<vector<int>> greyscale(vector<vector<vector<int>>> const mat){
-	vector<vector<int>> out(mat.size(), vector<int>(mat[0].size(), 0));
-
-
-	for (int i = 0; i < out.size(); i++){
-		for (int j = 0; j < out[0].size(); j++){
-			int cache = 0;
-			for (int c = 0; c < mat[0][0].size() - 1; c++){
-				cache += mat[i][j][c];
-			}
-
-			out[i][j] = cache / (mat[0][0].size() - 1);
-
-		}
-	}
-
-
-	// cout << "Greyscale: \n";
-	// for (int i = 200; i < 210; i++){
-	// 	for (int j = 200; j < 210; j++){
-	// 		cout << out[i][j] << " ";
-	// 		
-	// 	}
-	// 	cout << "\n";
-	// }
-
-	return out;
-}
-
-vector<int> parse_colors(const string& line){
-	vector<int> color;
+vector<unsigned char> parse_colors(const string& line){
+	vector<unsigned char> color;
 	size_t index1 = 0;
 	size_t index2 = 0;
 	string value_s;
-	int value;
+	unsigned char value;
 
 	// TODO make error checking to check if there are any non-numeric values on the line
 
@@ -112,9 +90,9 @@ string clean_line(string line){
 }
 
 
-vector<vector<int>> import_palette(const string& file, const string name){
-	vector<vector<int>> palette;
-	vector<int> color;
+vector<vector<unsigned char>> import_palette(const string file, const string name){
+	vector<vector<unsigned char>> palette;
+	vector<unsigned char> color;
  	ifstream raw(file);
 	string line;
 	size_t block;
@@ -146,56 +124,230 @@ vector<vector<int>> import_palette(const string& file, const string name){
 	return palette;
 }
 
-// IMPORTING AND EXPORTING LOGIC
+bool sort_color_list(vector<vector<unsigned char>> &list, vector<unsigned char> * brightness_list = nullptr){
+    sort(list.begin(), list.end(), [](vector<unsigned char> a, vector<unsigned char> b){
+        return ((a[0] + a[1] + a[2]) / 3) < ((b[0] + b[1] + b[2]) / 3);
+    });
 
-vector<vector<vector<int>>> vectorize_img(unsigned char* data, int width, int height){
-	vector<vector<vector<int>>> img;
-	for (int h = 0; h < height; h++){
-		vector<vector<int>> w_cache;
-		for (int w = 0; w < width; w++){
-			vector<int> c_cache;
-			for (int c = 0; c < 4; c++){
-				c_cache.push_back(static_cast<int>(data[c + (4 * (h * width + w))]));
+	if (brightness_list){
+	    for (const auto& color : list){
+	    	brightness_list->push_back((color[0] + color[1] + color [2]) / 3);
+		
+		}
+    }
+
+    return true;
+}
+
+vector<vector<unsigned char>> retrieve_selected_colors(vector<vector<unsigned char>> &list, int const amount, bool by_brightness = false){
+
+	vector<vector<unsigned char>> out;
+	size_t size = list.size();
+	
+	if (by_brightness){
+		vector<unsigned char> brightness_list;
+		vector<size_t> brightness_positions;
+		sort_color_list(list, &brightness_list); // it has to be sorted because we wanto to capture the minimum element, if we do not sort it we will always capture the first pixel instead, and it might not be the minimum
+		for (int i = 0; i < amount - 1; i++){
+			for (size_t j = (i * size / (amount - 1)); j < size; j++){
+				if (brightness_list[j] >= i * 255 / amount){
+					brightness_positions.push_back(j);
+					break;
+				} 
 			}
-			w_cache.push_back(c_cache);
 		}
-		img.push_back(w_cache);
-	}
-	return img;
-}
+		
+		for (const auto& pos : brightness_positions){
+			out.push_back(list[pos]);
+		}
 
-void splitting(vector<vector<vector<int>>> const img, vector<vector<int>> * r, vector<vector<int>> * g, vector<vector<int>> * b){
-	for (int i = 0; i < img.size(); i++){
-		for (int j = 0; j < img[i].size(); j++){
-			(*r)[i][j] = img[i][j][0];
-			(*g)[i][j] = img[i][j][1];
-			(*b)[i][j] = img[i][j][2];
+		out.push_back(list[size - 1]);
+	} else {
+		sort_color_list(list);
+		for (size_t i = 0; i < amount; i++){
+			out.push_back(list[i * size / amount]);
 		}
+		
 	}
-}
 
-vector<vector<vector<int>>> combine(vector<vector<int>> const *r, vector<vector<int>> const *g, vector<vector<int>> const *b){
-	vector<vector<vector<int>>> out((*r).size(), vector<vector<int>>((*r)[0].size(), vector<int>(4, 255)));
-	for (int i = 0; i < out.size(); i++){
-		for (int j = 0; j < out[i].size(); j++){
-			 out[i][j][0] = (*r)[i][j];
-			 out[i][j][1] = (*g)[i][j];
-			 out[i][j][2] = (*b)[i][j];
-		}
-	}
+	
+
 	return out;
 }
 
-vector<unsigned char> flatten_img(vector<vector<vector<int>>> img){
-	vector<unsigned char> data;
-	for (vector row : img){
-		for (vector color : row){
-			for (int value : color){
-				data.push_back(static_cast<unsigned char>(value));
-			}
-		}
+// QUANTIZATION LOGIC
+
+bool quantize_2d_vector_to_list(vector<vector<unsigned char>> const &mat, vector<vector<unsigned char>> const &list, vector<vector<unsigned char>> * red, vector<vector<unsigned char>> * green, vector<vector<unsigned char>> * blue){
+    size_t color_pos;
+    size_t size = list.size();
+
+    for (const auto& row : mat){
+        vector<unsigned char> cache_red;
+        vector<unsigned char> cache_green;
+        vector<unsigned char> cache_blue;
+        for (auto& val : row){
+            color_pos = (static_cast<float>(val) / 255.0f) * static_cast<float>(size - 1) + 0.5f;
+            cache_red.push_back(list[color_pos][0]);
+            cache_green.push_back(list[color_pos][1]);
+            cache_blue.push_back(list[color_pos][2]);
+        }
+        
+        red->push_back(cache_red);
+        green->push_back(cache_green);
+        blue->push_back(cache_blue);
+    }
+    
+    
+    return true;
+}
+
+vector<vector<unsigned char>> quantize_2d_vector_to_self(vector<vector<unsigned char>> mat, unsigned char resolution){
+    float cache;
+    
+    for (auto& row : mat){
+        for (auto& val : row){
+            cache = floor((static_cast<float>(val) / 255.0f) * static_cast<float>(resolution - 1) + 0.5f);
+            // cout << cache << "\n";
+            val = (cache * 255.0f) / static_cast<float>(resolution - 1);
+        }
+        // cout << "\n";
+    }
+    
+    return mat;
+}
+
+
+// IMPORTING AND EXPORTING LOGIC
+
+bool vectorize_to_rgb(unsigned char const * data, int const width, int const height, vector<vector<unsigned char>> * red, vector<vector<unsigned char>> * green, vector<vector<unsigned char>> * blue, vector<vector<unsigned char>> * alpha = nullptr){
+    if (alpha == nullptr){
+        int const channels = 3;
+        for (int y = 0; y < height; y++){
+            vector<unsigned char> cache_red;
+            vector<unsigned char> cache_green;
+            vector<unsigned char> cache_blue;
+            for (int x = 0; x < width; x++){
+                cache_red.push_back(data[(y * width + x) * channels + 0]);
+                cache_green.push_back(data[(y * width + x) * channels + 1]);
+                cache_blue.push_back(data[(y * width + x) * channels + 2]);
+            }
+            red->push_back(cache_red);
+            green->push_back(cache_green);
+            blue->push_back(cache_blue);
+        }
+    } else {
+        int const channels = 4;
+        for (int y = 0; y < height; y++){
+            vector<unsigned char> cache_red;
+            vector<unsigned char> cache_green;
+            vector<unsigned char> cache_blue;
+            vector<unsigned char> cache_alpha;
+            for (int x = 0; x < width; x++){
+                cache_red.push_back(data[(y * width + x) * channels + 0]);
+                cache_green.push_back(data[(y * width + x) * channels + 1]);
+                cache_blue.push_back(data[(y * width + x) * channels + 2]);
+                cache_alpha.push_back(data[(y * width + x) * channels + 3]);
+            }
+            red->push_back(cache_red);
+            green->push_back(cache_green);
+            blue->push_back(cache_blue);
+            alpha->push_back(cache_alpha);
+        }
+    }
+
+    
+    
+    return true;
+}
+
+
+bool vectorize_to_greyscale(unsigned char const * data, int const width, int const height, vector<vector<unsigned char>> * grey, vector<vector<unsigned char>> * alpha = nullptr){
+    int max = 0;
+    char cur;
+    size_t cur_pos;
+
+    if (alpha == nullptr){
+    	int channels = 3;
+	    for (int y = 0; y < height; y++){
+	        vector<unsigned char> cache_grey;
+	        for (int x = 0; x < width; x++){
+	            cur_pos = (y * width + x) * channels;
+	            cur = (data[cur_pos] + data[cur_pos + 1] + data[cur_pos + 2]) / 3;
+	            if (max < cur){
+	                max = cur;
+	            }
+	            cache_grey.push_back(cur);
+	        }
+	        grey->push_back(cache_grey);
+	    }
+    } else {
+    	int channels = 4;
+    	for (int y = 0; y < height; y++){
+	        vector<unsigned char> cache_grey;
+	        vector<unsigned char> cache_alpha;
+	        for (int x = 0; x < width; x++){
+	            cur_pos = (y * width + x) * channels;
+	            cur = (data[cur_pos] + data[cur_pos + 1] + data[cur_pos + 2]) / 3;
+	            if (max < cur){
+	                max = cur;
+	            }
+	            cache_grey.push_back(cur);
+	            cache_alpha.push_back(data[cur_pos + 3]);
+	        }
+	        grey->push_back(cache_grey);
+	        alpha->push_back(cache_alpha);
+	    }
+    	
+    }
+    
+    return true;
+}
+
+vector<vector<unsigned char>> vectorize_to_color_list(unsigned char const * data, int const width, int const height, int const channels){
+	vector<vector<unsigned char>> out;
+	for (size_t i = 0; i < width * height * channels; i += channels){
+		out.push_back({
+			data[i + 0],
+			data[i + 1],
+			data[i + 2]
+			});
 	}
-	return data;
+	
+
+	return out;
+}
+
+
+unsigned char * flatten(vector<vector<unsigned char>> const * red, vector<vector<unsigned char>> const * green = nullptr, vector<vector<unsigned char>> const * blue = nullptr, vector<vector<unsigned char>> const * alpha = nullptr){
+    // the output array must be deleted afterwards
+    
+    size_t height = (*red).size();
+    size_t width = (*red)[0].size();
+    int channels;
+    vector<vector<unsigned char>> const * channel[4] = {red, green, blue, alpha};
+
+	if (green == nullptr){
+		channels = 1;
+	} else if (blue == nullptr){
+		channels = 2;
+	} else if (alpha == nullptr){
+        channels = 3;
+    } else {
+        channels = 4;
+    }
+
+
+    unsigned char * out = new unsigned char[width * height * channels];
+
+    for (size_t y = 0; y < height; y++){
+        for (size_t x = 0; x < width; x++){
+        	for (size_t c = 0; c < channels; c++){
+            	out[(y * width + x) * channels + c] = (*(channel[c]))[y][x];
+        	}
+        }
+    }
+    
+    return out;
 }
 
 string out_name(string const path, string const palette){
@@ -208,70 +360,69 @@ int main(int argc, char* argv[]){
 	// parse arguments
 
 	args_t args = make_default_args();
-	parse_args(argc, argv, &args);
+	// parse_args(argc, argv, &args);
 
-	// if (!parse_args(argc, argv, &args) || args.help) {
- //        print_help(argv[0]);
- //        return 1;
- //    }
+	if (!parse_args(argc, argv, &args) || args.help) {
+        print_help(argv[0]);
+        return 1;
+    }
 
-	float s_sigma = args.blur_sigma;
-	float b_sigma = 1.6 * s_sigma;
-	int kernel_radius = 3 * b_sigma;
- 	string output_file = out_name(string(args.input_file), "dog");
+ 	string output_file;
 
  	
 		
 	// IMPORT
-	// vector<vector<int>> palette_raw = import_palette("../palettes.txt", palette_name);
+	// vector<vector<unsigned char>> palette_raw = import_palette("../palettes.txt", palette_name);
 	// kdtree palette(palette_raw);
 	
 	int width, height, channels;
-	unsigned char* data = stbi_load(args.input_file, &width, &height, &channels, 4);
+	unsigned char const * data = stbi_load(args.input_file, &width, &height, &channels, 0);
 	
 	if (!data) {
 	    cerr << "Failed to load image: " << stbi_failure_reason() << endl;
 	    return 1; // or handle error
 	}
-	
-	vector<vector<vector<int>>> const img = vectorize_img(data, width, height);
+
 
 	// cout << "Size: " << img.size() << "x" << img[0].size() << "x" << img[0][0].size() << endl;
 
 	
 	
-	vector<vector<int>> red (img.size(), vector<int>(img[0].size()));
-	vector<vector<int>> blue (img.size(), vector<int>(img[0].size()));
-	vector<vector<int>> green (img.size(), vector<int>(img[0].size()));
+	vector<vector<unsigned char>> red, green, blue, alpha, grey, out, palette;
 
-	splitting(img, &red, &green, &blue);
+	if (string(args.mode) == "equidistant"){
+		vectorize_to_greyscale(data, width, height, &grey);
+		palette = import_palette("../palettes.txt", args.palette);
+		sort_color_list(palette);
+		quantize_2d_vector_to_list(grey, palette, &red, &green, &blue);
+		output_file = out_name(string(args.input_file), "equidistant_" + string(args.palette));
+	}
+	if (string(args.mode) == "self"){
+		vectorize_to_rgb(data, width, height, &red, &green, &blue);
+		red = quantize_2d_vector_to_self(red, args.resolution);
+		green = quantize_2d_vector_to_self(green, args.resolution);
+		blue = quantize_2d_vector_to_self(blue, args.resolution);
+		output_file = out_name(string(args.input_file), "self");
+	} else if (string(args.mode) == "self-sort"){
+		vector<vector<unsigned char>> color_list = vectorize_to_color_list(data, width, height, channels);
+		color_list = retrieve_selected_colors(color_list, args.resolution, true);
+		vectorize_to_greyscale(data, width, height, &grey);
+		quantize_2d_vector_to_list(grey, color_list, &red, &green, &blue);
+		output_file = out_name(string(args.input_file), "self_sort");
+	}
 
-	vector<vector<float>> kernel = g_kernel(2 * kernel_radius + 1, s_sigma);
 
-
-	vector<vector<int>> dog_img = dog(greyscale(img), s_sigma);
-	// 
-	// red = convolve(red, kernel);
-	// green = convolve(green, kernel);
-	// blue = convolve(blue, kernel);
+	if (!(string(args.output_file).empty())){
+		output_file = string(args.output_file);
+		// cout << "writing image to " + output_file << endl;
+	}
 	
+	unsigned char * output = flatten(&red, &green, &blue);
+	
+	int error = stbi_write_bmp(output_file.c_str(), width, height, channels, output);
 
-	// vector<vector<vector<int>>> dog_out = combine(&red, &green, &blue);
-	vector<vector<vector<int>>> dog_out = img;
-
-	for (int i = 0; i < dog_out.size(); i++){
-		for (int j = 0; j < dog_out[0].size(); j++){
-			for (int c = 0; c < dog_out[0][0].size() - 1; c++){
-				dog_out[i][j][c] = dog_img[i][j];
-			}
-		}
-	}
-
-	unsigned error = lodepng::encode(output_file, flatten_img(dog_out), width, height);
-
-	if(error) {
-		cerr << "encoder error " << error << ": "<< lodepng_error_text(error) << endl;
-	}
+	
+	
 	    
 	return 0;
 }
