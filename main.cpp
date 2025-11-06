@@ -31,7 +31,6 @@ extern "C" {
 #include <vector>
 #include <cmath>
 #include <algorithm>
-#include <fstream>
 #include <string>
 
 #include "stb_image.h"
@@ -39,105 +38,18 @@ extern "C" {
 #include "kdtree.h"
 
 #include "src/blur.cpp"
+#include "src/palette_parser.cpp"
+#include "src/reshaping.cpp"
 
 using namespace std;
 
-
-// PALETTE PARSING LOGIC
-
-vector<unsigned char> parse_colors(const string& line){
-	vector<unsigned char> color;
-	size_t index1 = 0;
-	size_t index2 = 0;
-	string value_s;
-	unsigned char value;
-
-	// TODO make error checking to check if there are any non-numeric values on the line
-
-	for (int i = 0; i < 3; i++){
-		index1 = line.find_first_of("1234567890", index2);
-		index2 = line.find_first_of("	 ", index1);
-		if (index1 != string::npos){
-			value_s = line.substr(index1, index2-index1);
-			value = stoi(value_s);
-			color.push_back(value);
-		} else {
-			cerr << "COULD NOT PARSE COLORS." << endl;
-			return {};
-		}
-	}
-	return color;
+string out_name(string const path, string const palette){
+	size_t pos = path.rfind(".");
+	return path.substr(0, pos) + "_" + palette + path.substr(pos);
 }
 
 
-string clean_line(string line){
-	size_t comment = line.find("#");
-	if (comment != string::npos){
-		line = line.substr(0, comment);
-	}
-
-	size_t start = line.find_first_not_of(" ");
-	if (start != string::npos){
-		line = line.substr(start, line.size());
-	}
-
-	size_t end = line.find_last_not_of(" ");
-	if (end != string::npos){
-		line = line.substr(0, end + 1);
-	}
-	
-	return line;
-}
-
-
-vector<vector<unsigned char>> import_palette(const string file, const string name){
-	vector<vector<unsigned char>> palette;
-	vector<unsigned char> color;
- 	ifstream raw(file);
-	string line;
-	size_t block;
-	
-	while (getline(raw, line)) {
-		line = clean_line(line);
-    	block = line.find("[" + name + "]"); // find the palette that we are looking for
-    	if (block != string::npos){ // if palette is found break out and start parsing the colors
-    		break;
-    	}
-    }
-
-    if (block == string::npos){
-    	cout << "Palette was not found." << endl;
-    	return {};
-    }
-    
-   	while (getline(raw, line)){
-   		line = clean_line(line);
-   		size_t end = line.find("["); // find the end of the block
-   		if (line.empty()){
-   		} else if (end != string::npos){
-   			break;
-   		} else {
-   			color = parse_colors(line);
-   			palette.push_back(color);
-   		}
-   	}    	
-	return palette;
-}
-
-bool sort_color_list(vector<vector<unsigned char>> &list, vector<unsigned char> * brightness_list = nullptr){
-    sort(list.begin(), list.end(), [](vector<unsigned char> a, vector<unsigned char> b){
-        return ((a[0] + a[1] + a[2]) / 3) < ((b[0] + b[1] + b[2]) / 3);
-    });
-
-	if (brightness_list){
-	    for (const auto& color : list){
-	    	brightness_list->push_back((color[0] + color[1] + color [2]) / 3);
-		
-		}
-    }
-
-    return true;
-}
+// QUANTIZATION LOGIC
 
 vector<vector<unsigned char>> retrieve_selected_colors(vector<vector<unsigned char>> &list, int const amount, bool by_brightness = false){
 
@@ -174,8 +86,6 @@ vector<vector<unsigned char>> retrieve_selected_colors(vector<vector<unsigned ch
 
 	return out;
 }
-
-// QUANTIZATION LOGIC
 
 bool quantize_2d_vector_to_list(vector<vector<unsigned char>> const &mat, vector<vector<unsigned char>> const &list, vector<vector<unsigned char>> * red, vector<vector<unsigned char>> * green, vector<vector<unsigned char>> * blue){
     size_t color_pos;
@@ -217,143 +127,62 @@ vector<vector<unsigned char>> quantize_2d_vector_to_self(vector<vector<unsigned 
 }
 
 
-// IMPORTING AND EXPORTING LOGIC
+// EDGE DETECTION LOGIC
+const vector<vector<int>> sobel_x = {
+	{-1, 0, 1},
+	{-2, 0, 2},
+	{-1, 0, 1}
+};
 
-bool vectorize_to_rgb(unsigned char const * data, int const width, int const height, vector<vector<unsigned char>> * red, vector<vector<unsigned char>> * green, vector<vector<unsigned char>> * blue, vector<vector<unsigned char>> * alpha = nullptr){
-    if (alpha == nullptr){
-        int const channels = 3;
-        for (int y = 0; y < height; y++){
-            vector<unsigned char> cache_red;
-            vector<unsigned char> cache_green;
-            vector<unsigned char> cache_blue;
-            for (int x = 0; x < width; x++){
-                cache_red.push_back(data[(y * width + x) * channels + 0]);
-                cache_green.push_back(data[(y * width + x) * channels + 1]);
-                cache_blue.push_back(data[(y * width + x) * channels + 2]);
-            }
-            red->push_back(cache_red);
-            green->push_back(cache_green);
-            blue->push_back(cache_blue);
-        }
-    } else {
-        int const channels = 4;
-        for (int y = 0; y < height; y++){
-            vector<unsigned char> cache_red;
-            vector<unsigned char> cache_green;
-            vector<unsigned char> cache_blue;
-            vector<unsigned char> cache_alpha;
-            for (int x = 0; x < width; x++){
-                cache_red.push_back(data[(y * width + x) * channels + 0]);
-                cache_green.push_back(data[(y * width + x) * channels + 1]);
-                cache_blue.push_back(data[(y * width + x) * channels + 2]);
-                cache_alpha.push_back(data[(y * width + x) * channels + 3]);
-            }
-            red->push_back(cache_red);
-            green->push_back(cache_green);
-            blue->push_back(cache_blue);
-            alpha->push_back(cache_alpha);
-        }
-    }
+const vector<vector<int>> sobel_y = {
+	{-1, -2, -1},
+	{ 0,  0,  0},
+	{ 1,  2,  1}
+};
 
-    
-    
-    return true;
-}
-
-
-bool vectorize_to_greyscale(unsigned char const * data, int const width, int const height, vector<vector<unsigned char>> * grey, vector<vector<unsigned char>> * alpha = nullptr){
-    int max = 0;
-    char cur;
-    size_t cur_pos;
-
-    if (alpha == nullptr){
-    	int channels = 3;
-	    for (int y = 0; y < height; y++){
-	        vector<unsigned char> cache_grey;
-	        for (int x = 0; x < width; x++){
-	            cur_pos = (y * width + x) * channels;
-	            cur = (data[cur_pos] + data[cur_pos + 1] + data[cur_pos + 2]) / 3;
-	            if (max < cur){
-	                max = cur;
-	            }
-	            cache_grey.push_back(cur);
-	        }
-	        grey->push_back(cache_grey);
-	    }
-    } else {
-    	int channels = 4;
-    	for (int y = 0; y < height; y++){
-	        vector<unsigned char> cache_grey;
-	        vector<unsigned char> cache_alpha;
-	        for (int x = 0; x < width; x++){
-	            cur_pos = (y * width + x) * channels;
-	            cur = (data[cur_pos] + data[cur_pos + 1] + data[cur_pos + 2]) / 3;
-	            if (max < cur){
-	                max = cur;
-	            }
-	            cache_grey.push_back(cur);
-	            cache_alpha.push_back(data[cur_pos + 3]);
-	        }
-	        grey->push_back(cache_grey);
-	        alpha->push_back(cache_alpha);
-	    }
-    	
-    }
-    
-    return true;
-}
-
-vector<vector<unsigned char>> vectorize_to_color_list(unsigned char const * data, int const width, int const height, int const channels){
-	vector<vector<unsigned char>> out;
-	for (size_t i = 0; i < width * height * channels; i += channels){
-		out.push_back({
-			data[i + 0],
-			data[i + 1],
-			data[i + 2]
-			});
+template<typename T, typename U>
+vector<U> vector_converter(vector<T> const &vec){
+	vector<U> out;
+	for (auto& element : vec){
+		out.push_back(static_cast<U>(element));
 	}
-	
-
 	return out;
 }
 
+template<typename T, typename U = int>
+vector<vector<T>> detect_edges_sobel(vector<vector<T>> const &mat, int normalize_to = 0){
+	vector<vector<U>> transformed;
+	for (const auto& row : mat){
+		transformed.push_back(vector_converter<T, U>(row));
+	}
 
-unsigned char * flatten(vector<vector<unsigned char>> const * red, vector<vector<unsigned char>> const * green = nullptr, vector<vector<unsigned char>> const * blue = nullptr, vector<vector<unsigned char>> const * alpha = nullptr){
-    // the output array must be deleted afterwards
-    
-    size_t height = (*red).size();
-    size_t width = (*red)[0].size();
-    int channels;
-    vector<vector<unsigned char>> const * channel[4] = {red, green, blue, alpha};
+	vector<vector<U>> horizontal = convolve(transformed, sobel_x);
+	transformed = convolve(transformed, sobel_y);
 
-	if (green == nullptr){
-		channels = 1;
-	} else if (blue == nullptr){
-		channels = 2;
-	} else if (alpha == nullptr){
-        channels = 3;
-    } else {
-        channels = 4;
-    }
+	vector<vector<T>> output = mat;
 
+	U max = 0;
+	for (size_t i = 0; i < output.size(); i++){
+		for (size_t j = 0; j < output[i].size(); j++){
+			transformed[i][j] = abs(transformed[i][j]) + abs(horizontal[i][j]);
+			if (normalize_to > 0 && transformed[i][j] > max){
+				max = transformed[i][j];
+			}
+		}
+	}
 
-    unsigned char * out = new unsigned char[width * height * channels];
+	if (normalize_to > 0){
+		for (size_t i = 0; i < output.size(); i++){
+			for (size_t j = 0; j < output[i].size(); j++){
+				output[i][j] = normalize_to * transformed[i][j] / max;
+			}
+		}
+		
+	}
 
-    for (size_t y = 0; y < height; y++){
-        for (size_t x = 0; x < width; x++){
-        	for (size_t c = 0; c < channels; c++){
-            	out[(y * width + x) * channels + c] = (*(channel[c]))[y][x];
-        	}
-        }
-    }
-    
-    return out;
+	return output;
 }
 
-string out_name(string const path, string const palette){
-	size_t pos = path.rfind(".");
-	return path.substr(0, pos) + "_" + palette + path.substr(pos);
-}
 
 
 int main(int argc, char* argv[]){
@@ -390,14 +219,35 @@ int main(int argc, char* argv[]){
 	
 	vector<vector<unsigned char>> red, green, blue, alpha, grey, out, palette;
 
-	if (string(args.mode) == "equidistant"){
+
+	if (string(args.mode) == "search"){
+		palette = import_palette<unsigned char>("../palettes.txt", args.palette);
+		kdtree<unsigned char> palette_tree(palette);
+		vectorize_to_rgb(data, width, height, &red, &green, &blue);
+		for (size_t i = 0; i < red.size(); i++){
+			for (size_t j = 0; j < red[0].size(); j++){
+				vector<unsigned char> cache(3);
+				cache[0] = red[i][j];
+				cache[1] = green[i][j];
+				cache[2] = blue[i][j];
+
+				node<unsigned char> cache_node = palette_tree.nearest(cache);
+
+				red[i][j] = cache_node[0];
+				green[i][j] = cache_node[1];
+				blue[i][j] = cache_node[2];
+			}
+		}
+		quantize_2d_vector_to_list(grey, palette, &red, &green, &blue);
+		output_file = out_name(string(args.input_file), "search_" + string(args.palette));
+		
+	} else if (string(args.mode) == "equidistant"){
 		vectorize_to_greyscale(data, width, height, &grey);
-		palette = import_palette("../palettes.txt", args.palette);
+		palette = import_palette<unsigned char>("../palettes.txt", args.palette);
 		sort_color_list(palette);
 		quantize_2d_vector_to_list(grey, palette, &red, &green, &blue);
 		output_file = out_name(string(args.input_file), "equidistant_" + string(args.palette));
-	}
-	if (string(args.mode) == "self"){
+	} else if (string(args.mode) == "self"){
 		vectorize_to_rgb(data, width, height, &red, &green, &blue);
 		red = quantize_2d_vector_to_self(red, args.resolution);
 		green = quantize_2d_vector_to_self(green, args.resolution);
@@ -409,6 +259,15 @@ int main(int argc, char* argv[]){
 		vectorize_to_greyscale(data, width, height, &grey);
 		quantize_2d_vector_to_list(grey, color_list, &red, &green, &blue);
 		output_file = out_name(string(args.input_file), "self_sort");
+	} else if (string(args.mode) == "edge") {
+		vectorize_to_rgb(data, width, height, &red, &green, &blue);
+		red = detect_edges_sobel(red, 255);
+		green = detect_edges_sobel(green, 255);
+		blue = detect_edges_sobel(blue, 255);
+		output_file = out_name(string(args.input_file), "edges");
+	} else {
+		print_help(argv[0]);
+        return 1;
 	}
 
 

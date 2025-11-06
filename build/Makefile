@@ -153,30 +153,6 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQuantizer.dir/build.make CMakeFiles/KQuantizer.dir/main.cpp.s
 .PHONY : main.cpp.s
 
-src/kdtree.o: src/kdtree.cpp.o
-.PHONY : src/kdtree.o
-
-# target to build an object file
-src/kdtree.cpp.o:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQuantizer.dir/build.make CMakeFiles/KQuantizer.dir/src/kdtree.cpp.o
-.PHONY : src/kdtree.cpp.o
-
-src/kdtree.i: src/kdtree.cpp.i
-.PHONY : src/kdtree.i
-
-# target to preprocess a source file
-src/kdtree.cpp.i:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQuantizer.dir/build.make CMakeFiles/KQuantizer.dir/src/kdtree.cpp.i
-.PHONY : src/kdtree.cpp.i
-
-src/kdtree.s: src/kdtree.cpp.s
-.PHONY : src/kdtree.s
-
-# target to generate assembly for a file
-src/kdtree.cpp.s:
-	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQuantizer.dir/build.make CMakeFiles/KQuantizer.dir/src/kdtree.cpp.s
-.PHONY : src/kdtree.cpp.s
-
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -189,9 +165,6 @@ help:
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
-	@echo "... src/kdtree.o"
-	@echo "... src/kdtree.i"
-	@echo "... src/kdtree.s"
 .PHONY : help
 
 

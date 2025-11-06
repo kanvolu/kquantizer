@@ -178,10 +178,6 @@ CMakeFiles/KQuantizer.dir/main.cpp.o: \
  /usr/include/c++/15.2.1/bits/stl_tempbuf.h \
  /usr/include/c++/15.2.1/pstl/glue_algorithm_defs.h \
  /usr/include/c++/15.2.1/pstl/execution_defs.h \
- /usr/include/c++/15.2.1/fstream /usr/include/c++/15.2.1/bits/codecvt.h \
- /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/basic_file.h \
- /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/c++io.h \
- /usr/include/c++/15.2.1/bits/fstream.tcc \
  /home/kanvolu/Documents/Dev_Projects/kquantizer/include/stb_image.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/limits.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/syslimits.h \
@@ -199,4 +195,10 @@ CMakeFiles/KQuantizer.dir/main.cpp.o: \
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/mm_malloc.h \
  /home/kanvolu/Documents/Dev_Projects/kquantizer/include/stb_image_write.h \
  /home/kanvolu/Documents/Dev_Projects/kquantizer/include/kdtree.h \
- /home/kanvolu/Documents/Dev_Projects/kquantizer/src/blur.cpp
+ /home/kanvolu/Documents/Dev_Projects/kquantizer/src/blur.cpp \
+ /home/kanvolu/Documents/Dev_Projects/kquantizer/src/palette_parser.cpp \
+ /usr/include/c++/15.2.1/fstream /usr/include/c++/15.2.1/bits/codecvt.h \
+ /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/basic_file.h \
+ /usr/include/c++/15.2.1/x86_64-pc-linux-gnu/bits/c++io.h \
+ /usr/include/c++/15.2.1/bits/fstream.tcc \
+ /home/kanvolu/Documents/Dev_Projects/kquantizer/src/reshaping.cpp
