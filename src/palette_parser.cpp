@@ -82,7 +82,8 @@ std::vector<std::vector<T>> import_palette(const std::string file, const std::st
    			color = parse_colors<T>(line);
    			palette.push_back(color);
    		}
-   	}    	
+   	}
+   	// sort_color_list(palette);
 	return palette;
 }
 

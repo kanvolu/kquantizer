@@ -3,8 +3,8 @@
 #include <iostream>
 #include <vector>
 
-template <typename T>
-bool vectorize_to_rgb(T const * data, size_t const width, size_t const height, std::vector<std::vector<T>> * red, std::vector<std::vector<T>> * green, std::vector<std::vector<T>> * blue, std::vector<std::vector<T>> * alpha = nullptr){
+template <typename U, typename T = int>
+bool vectorize_to_rgb(U const * data, size_t const width, size_t const height, std::vector<std::vector<T>> * red, std::vector<std::vector<T>> * green, std::vector<std::vector<T>> * blue, std::vector<std::vector<T>> * alpha = nullptr){
     if (alpha == nullptr){
         int const channels = 3;
         for (size_t y = 0; y < height; y++){
@@ -45,52 +45,23 @@ bool vectorize_to_rgb(T const * data, size_t const width, size_t const height, s
     return true;
 }
 
-template <typename T>
-bool vectorize_to_greyscale(T const * data, size_t const width, size_t const height, std::vector<std::vector<T>> * grey, std::vector<std::vector<T>> * alpha = nullptr){
-    int max = 0;
-    char cur;
-    size_t cur_pos;
 
-    if (alpha == nullptr){
-    	int channels = 3;
-	    for (size_t y = 0; y < height; y++){
-	        std::vector<T> cache_grey;
-	        for (size_t x = 0; x < width; x++){
-	            cur_pos = (y * width + x) * channels;
-	            cur = (data[cur_pos] + data[cur_pos + 1] + data[cur_pos + 2]) / 3;
-	            if (max < cur){
-	                max = cur;
-	            }
-	            cache_grey.push_back(cur);
-	        }
-	        grey->push_back(cache_grey);
-	    }
-    } else {
-    	int channels = 4;
-    	for (size_t y = 0; y < height; y++){
-	        std::vector<T> cache_grey;
-	        std::vector<T> cache_alpha;
-	        for (size_t x = 0; x < width; x++){
-	            cur_pos = (y * width + x) * channels;
-	            cur = (data[cur_pos] + data[cur_pos + 1] + data[cur_pos + 2]) / 3;
-	            if (max < cur){
-	                max = cur;
-	            }
-	            cache_grey.push_back(cur);
-	            cache_alpha.push_back(data[cur_pos + 3]);
-	        }
-	        grey->push_back(cache_grey);
-	        alpha->push_back(cache_alpha);
-	    }
-    	
-    }
-    
-    return true;
+template <typename T>
+std::vector<std::vector<T>> rgb_to_greyscale(std::vector<std::vector<T>> const &r, std::vector<std::vector<T>> const &g, std::vector<std::vector<T>> const &b){
+	std::vector<std::vector<T>> out;
+	for (size_t i = 0; i < r.size(); i++){
+		std::vector<T> cache;
+		for (size_t j = 0; j < r[i].size(); j++){
+			cache.push_back((r[i][j] + g[i][j] + b[i][j]) / 3);
+		}
+		out.push_back(cache);
+	}
+	return out;
 }
 
 
-template <typename T>
-std::vector<std::vector<T>> vectorize_to_color_list(T const * data, size_t const width, size_t const height, int const channels){
+template <typename U, typename T = int>
+std::vector<std::vector<T>> vectorize_to_color_list(U const * data, size_t const width, size_t const height, int const channels){
 	std::vector<std::vector<T>> out;
 	for (size_t i = 0; i < width * height * channels; i += channels){
 		out.push_back({
@@ -105,13 +76,13 @@ std::vector<std::vector<T>> vectorize_to_color_list(T const * data, size_t const
 }
 
 template <typename T>
-T * flatten(std::vector<std::vector<T>> const * red, std::vector<std::vector<T>> const * green = nullptr, std::vector<std::vector<T>> const * blue = nullptr, std::vector<std::vector<T>> const * alpha = nullptr){
+unsigned char * flatten(std::vector<std::vector<T>> const * red, std::vector<std::vector<T>> const * green = nullptr, std::vector<std::vector<T>> const * blue = nullptr, std::vector<std::vector<T>> const * alpha = nullptr){
     // the output array must be deleted afterwards
     
     size_t height = (*red).size();
     size_t width = (*red)[0].size();
-    int channels;
-    std::vector<std::vector<unsigned char>> const * channel[4] = {red, green, blue, alpha};
+    size_t channels;
+    std::vector<std::vector<T>> const * channel[4] = {red, green, blue, alpha};
 
 	if (green == nullptr){
 		channels = 1;
@@ -124,12 +95,16 @@ T * flatten(std::vector<std::vector<T>> const * red, std::vector<std::vector<T>>
     }
 
 
-    T * out = new T[width * height * channels];
+    unsigned char * out = new unsigned char[width * height * channels];
 
     for (size_t y = 0; y < height; y++){
         for (size_t x = 0; x < width; x++){
         	for (size_t c = 0; c < channels; c++){
-            	out[(y * width + x) * channels + c] = (*(channel[c]))[y][x];
+        		if constexpr (std::is_same_v<T, unsigned char>){
+            		out[(y * width + x) * channels + c] = (*(channel[c]))[y][x];
+        		} else {
+        			out[(y * width + x) * channels + c] = static_cast<unsigned char>((*(channel[c]))[y][x]);
+        		}
         	}
         }
     }

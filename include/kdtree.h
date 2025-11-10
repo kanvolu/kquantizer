@@ -110,12 +110,40 @@ class kdtree{
 		}
 	}
 
+	node<T> farthest(std::vector<T> target, node<T> temp, node<T> cur){
+		if (dist_sqrd(target, temp.values) < dist_sqrd(target, cur.values)){
+			return cur;
+		} else {
+			return temp;
+		}
+	}
+
 public:
 
 	std::vector<node<T>> tree;
 
 	kdtree(std::vector<std::vector<T>> data){
 		next_node(data);
+	}
+
+	size_t minimum(){
+		size_t minimum_pos;
+		T minimum_sum = 0;
+		for (const auto& value : tree[0]){
+			minimum_sum += value * value;
+		}
+		
+		for (size_t i = 0; i < tree.size(); i++){
+			T cache_sum = 0;
+			for (size_t j = 0; j < tree[i].size(); j++){
+				cache_sum += tree[i][j] * tree[i][j];
+			}
+			if (cache_sum < minimum_sum){
+				minimum_sum = cache_sum;
+				minimum_pos = i;
+			}
+		}
+		return minimum_pos;
 	}
 	
 	node<T> nearest(std::vector<T> target, size_t cur_pos = 0){
@@ -131,17 +159,8 @@ public:
 			next = cur.left;
 			other = cur_pos;
 
-			// std::cout << "single in search" << \n;
 			node<T> temp = nearest(target, next);
 			node<T> best = closest(target, temp, cur);
-
-	// 			long r_sqrd = dist_sqrd(target, best.values);
-	// 			long dist = (target[k] - cur[k]) * (target[k] - cur[k]);
-	// 
-	// 			if (r_sqrd >= dist){
-	// 				temp = nearest(target, other);
-	// 				best = closest(target, temp, best);
-	// 			}
 			
 			return best;
 		} else {
@@ -166,8 +185,52 @@ public:
 			return best;
 		}
 	}
-	
-		// if you want to print a single value of the nodes in the tree you have to also pass print_depth
+
+// 	node<T> farthermost(std::vector<T> target, int cur_pos = -1){
+// 		node<T> cur;
+// 		if (cur_pos < 0){
+// 			cur = tree[minimum()];
+// 		} else {
+// 			cur = tree[cur_pos];
+// 		}
+// 
+// 		size_t k = cur.depth % cur.size();
+// 		size_t next, other;
+// 
+// 		if (cur.left < 0 && cur.right < 0){
+// 			return cur;
+// 		} else if (cur.right < 0){
+// 			next = cur.left;
+// 			other = cur_pos;
+// 
+// 			node<T> temp = farthermost(target, next);
+// 			node<T> best = farthest(target, temp, cur);
+// 
+// 			return best;
+// 		} else {
+// 			if (target[k] <= cur[k]){
+// 				other = cur.left;
+// 				next = cur.right;
+// 			} else {
+// 				next = cur.left;
+// 				other = cur.right;
+// 			}
+// 
+// 			node<T> temp = farthermost(target, next);
+// 			node<T> best = farthest(target, temp, cur);
+// 
+// 			U r_sqrt = dist_sqrd(target, best.values);
+// 			U dist = (target[k] - cur[k]) * (target[k] - cur[k]);
+// 
+// 			if (r_sqrd <= dist){
+// 				temp = farthermost(target, other);
+// 				best = farthest(target, temp, best);
+// 			}
+// 
+// 			return best;
+// 		}
+// 	}
+
 	void print(int k = -1, bool print_depth = false){
 		if (k < 0){
 			for (node<T> point : tree){
