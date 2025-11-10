@@ -1,8 +1,10 @@
 #pragma once
+
 #include <iostream>
 #include <vector>
 #include <cmath>
 
+#include "reshaping.cpp"
 
 float gaus(float x, float deviation){
 	x = exp(-(x * x) / (2 * deviation * deviation));
@@ -100,6 +102,20 @@ std::vector<std::vector<T>> convolve(std::vector<std::vector<T>> const mat, std:
 	return out;
 }
 
+
+template <typename T>
+std::vector<std::vector<T>> apply_blur(std::vector<std::vector<T>> mat, std::vector<std::vector<float>> const &kernel){
+	std::vector<std::vector<T>> padded = pad(mat, kernel.size() / 2);
+
+	for (size_t i = 0; i < mat.size(); i++){
+		for (size_t j = 0; j < mat[i].size(); j++){
+			mat[i][j] = colapse(slice<T>(padded, i, j, kernel.size()), kernel);
+		}
+	}
+
+	return mat;
+}
+
 template <typename T>
 std::vector<std::vector<T>> dog(std::vector<std::vector<T>> const mat, float s_sigma){
 	float b_sigma = 1.6 * s_sigma;
@@ -129,4 +145,49 @@ std::vector<std::vector<T>> dog(std::vector<std::vector<T>> const mat, float s_s
 
 	return out;
 	
+}
+
+// EDGE DETECTION LOGIC
+const std::vector<std::vector<int>> sobel_x = {
+	{-1, 0, 1},
+	{-2, 0, 2},
+	{-1, 0, 1}
+};
+
+const std::vector<std::vector<int>> sobel_y = {
+	{-1, -2, -1},
+	{ 0,  0,  0},
+	{ 1,  2,  1}
+};
+
+
+template<typename T = int>
+std::vector<std::vector<float>> detect_edges_sobel(std::vector<std::vector<T>> const &mat){
+	std::vector<std::vector<float>> new_mat(mat.size());
+	if constexpr (!std::is_same_v<T, float>){
+		for (size_t i = 0; i < mat.size(); i++){
+			new_mat[i] = vector_converter<T, float>(mat[i]);
+		}
+	}
+
+	std::vector<std::vector<float>> horizontal = convolve(new_mat, sobel_x);
+	std::vector<std::vector<float>> vertical = convolve(new_mat, sobel_y);
+
+	float max = 0;
+	for (size_t i = 0; i < horizontal.size(); i++){
+		for (size_t j = 0; j < horizontal[0].size(); j++){
+			horizontal[i][j] = sqrt(horizontal[i][j] * horizontal[i][j] + vertical[i][j] * vertical[i][j]);
+			if (max < horizontal[i][j]){
+				max = horizontal[i][j];
+			}
+		}
+	}
+
+	for (auto& row : horizontal){
+		for (auto& val : row){
+			val = val / max;
+		}
+	}
+
+	return horizontal;
 }

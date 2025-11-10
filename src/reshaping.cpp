@@ -3,6 +3,16 @@
 #include <iostream>
 #include <vector>
 
+template<typename T, typename U>
+std::vector<U> vector_converter(std::vector<T> const &vec){
+	std::vector<U> out;
+	for (auto& element : vec){
+		out.push_back(static_cast<U>(element));
+	}
+	return out;
+}
+
+
 template <typename U, typename T = int>
 bool vectorize_to_rgb(U const * data, size_t const width, size_t const height, std::vector<std::vector<T>> * red, std::vector<std::vector<T>> * green, std::vector<std::vector<T>> * blue, std::vector<std::vector<T>> * alpha = nullptr){
     if (alpha == nullptr){

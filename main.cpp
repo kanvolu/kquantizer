@@ -39,9 +39,9 @@ extern "C" {
 #include "stb_image_write.h"
 #include "kdtree.h"
 
-#include "src/blur.cpp"
-#include "src/palette_parser.cpp"
 #include "src/reshaping.cpp"
+#include "src/palette_parser.cpp"
+#include "src/blur.cpp"
 
 using namespace std;
 
@@ -62,7 +62,7 @@ vector<vector<T>> retrieve_selected_colors(vector<vector<T>> &list, size_t const
 	if (by_brightness){
 		vector<T> brightness_list;
 		vector<size_t> brightness_positions;
-		sort_color_list(list, &brightness_list); // it has to be sorted because we wanto to capture the minimum element, if we do not sort it we will always capture the first pixel instead, and it might not be the minimum
+		sort_color_list(list, &brightness_list); // it has to be sorted because we want to capture the minimum element, if we do not sort it we will always capture the first pixel instead, and it might not be the minimum
 		for (size_t i = 0; i < amount - 1; i++){
 			for (size_t j = (i * size / (amount - 1)); j < size; j++){
 				if (brightness_list[j] >= i * 255 / amount){
@@ -91,7 +91,11 @@ vector<vector<T>> retrieve_selected_colors(vector<vector<T>> &list, size_t const
 }
 
 template <typename T>
-bool quantize_2d_vector_to_list(vector<vector<T>> const &mat, vector<vector<T>> const &list, vector<vector<T>> * red, vector<vector<T>> * green, vector<vector<T>> * blue){
+bool quantize_2d_vector_to_list(vector<vector<T>> const &mat, 
+	vector<vector<T>> const &list, 
+	vector<vector<T>> * red, 
+	vector<vector<T>> * green, 
+	vector<vector<T>> * blue){
     size_t color_pos;
     size_t size = list.size();
 
@@ -111,7 +115,6 @@ bool quantize_2d_vector_to_list(vector<vector<T>> const &mat, vector<vector<T>> 
         blue->push_back(cache_blue);
     }
     
-    
     return true;
 }
 
@@ -122,108 +125,21 @@ vector<vector<T>> quantize_2d_vector_to_self(vector<vector<T>> mat, int resoluti
     for (auto& row : mat){
         for (auto& val : row){
             cache = floor((static_cast<float>(val) / 255.0f) * static_cast<float>(resolution - 1) + 0.5f);
-            // cout << cache << "\n";
             val = (cache * 255.0f) / static_cast<float>(resolution - 1);
         }
-        // cout << "\n";
     }
     
     return mat;
 }
 
 
-// EDGE DETECTION LOGIC
-const vector<vector<int>> sobel_x = {
-	{-1, 0, 1},
-	{-2, 0, 2},
-	{-1, 0, 1}
-};
 
-const vector<vector<int>> sobel_y = {
-	{-1, -2, -1},
-	{ 0,  0,  0},
-	{ 1,  2,  1}
-};
-
-template<typename T, typename U>
-vector<U> vector_converter(vector<T> const &vec){
-	vector<U> out;
-	for (auto& element : vec){
-		out.push_back(static_cast<U>(element));
-	}
-	return out;
-}
-
-template<typename T, typename U = int>
-vector<vector<T>> detect_edges_sobel(vector<vector<T>> const &mat, int normalize_to = 0){
-	vector<vector<U>> transformed;
-	for (const auto& row : mat){
-		transformed.push_back(vector_converter<T, U>(row));
-	}
-
-	vector<vector<U>> horizontal = convolve(transformed, sobel_x);
-	transformed = convolve(transformed, sobel_y);
-
-	vector<vector<T>> output = mat;
-
-	U max = 0;
-	for (size_t i = 0; i < output.size(); i++){
-		for (size_t j = 0; j < output[i].size(); j++){
-			transformed[i][j] = abs(transformed[i][j]) + abs(horizontal[i][j]);
-			if (normalize_to > 0 && transformed[i][j] > max){
-				max = transformed[i][j];
-			}
-		}
-	}
-
-	if (normalize_to > 0){
-		for (size_t i = 0; i < output.size(); i++){
-			for (size_t j = 0; j < output[i].size(); j++){
-				output[i][j] = normalize_to * transformed[i][j] / max;
-			}
-		}
-		
-	}
-
-	return output;
-}
-
-template<typename T = int>
-vector<vector<bool>> make_mask(vector<vector<T>> const &mat, T const threshold, bool invert = false){
-	vector<vector<bool>> out(mat.size(), vector<bool>(mat[0].size()));
-	// the segfault seems to be caused because mat is empty and therefore mat[0] causes a segfault
-	for (size_t i = 0; i < mat.size(); i++){
-		for (size_t j = 0; j < mat[i].size(); j++){
-			if (mat[i][j] < threshold){
-				out[i][j] = invert;
-			} else {
-				out[i][j] = !invert;
-			}
-		}
-	}
-
-	return out;
-}
 
 template <typename T>
-vector<vector<T>> apply_blur(vector<vector<T>> mat, vector<vector<float>> const &kernel, vector<vector<bool>> const &mask = {}){
-	vector<vector<T>> padded = pad(mat, kernel.size() / 2);
-
-	for (size_t i = 0; i < mat.size(); i++){
-		for (size_t j = 0; j < mat[i].size(); j++){
-			if (!mask.empty() && mask[i][j]){
-				mat[i][j] = colapse(slice<T>(padded, i, j, kernel.size()), kernel);
-			} else {
-				mat[i][j] = colapse(slice<T>(padded, i, j, kernel.size()), kernel);
-			}
-		}
-	}
-
-	return mat;
-}
-
-template <typename T>
-vector<vector<size_t>> count_repetitions(vector<vector<T>> const &red, vector<vector<T>> const &green, vector<vector<T>> const &blue, vector<vector<T>> const &palette){
+vector<vector<size_t>> count_repetitions(vector<vector<T>> const &red, 
+	vector<vector<T>> const &green, 
+	vector<vector<T>> const &blue, 
+	vector<vector<T>> const &palette){
 	vector<vector<size_t>> counter(palette.size(), vector<size_t>(2, 0));
 	for (size_t i = 0; i < palette.size(); i++){
 		counter[i][0] = i;
@@ -249,8 +165,6 @@ vector<vector<size_t>> count_repetitions(vector<vector<T>> const &red, vector<ve
 
 	return counter;
 }
-
-
 
 
 int main(int argc, char* argv[]){
@@ -282,7 +196,8 @@ int main(int argc, char* argv[]){
 	}
 	
 
-	vector<vector<int>> red, green, blue, alpha, grey, edges, palette;
+	vector<vector<int>> red, green, blue, alpha, grey, palette;
+	vector<vector<float>> edges;
 
 	// PREPROCESSING
 
@@ -297,12 +212,27 @@ int main(int argc, char* argv[]){
 	
 	if (args.blur > 0){
 		grey = rgb_to_greyscale(red, green, blue);
-		edges = detect_edges_sobel(grey, 255);
-		vector<vector<bool>> mask = make_mask(edges, 128, true);
-		vector<vector<float>> kernel = g_kernel(args.blur * 2 + 1, static_cast<float>(args.blur) / 3.0f);
-		red = apply_blur(red, kernel, mask);
-		green = apply_blur(green, kernel, mask);
-		blue = apply_blur(blue, kernel, mask);
+		edges = detect_edges_sobel(grey);
+		vector<vector<float>> kernel = g_kernel(2 * args.blur + 1, static_cast<float>(args.blur) / 3.0f);
+		vector<vector<int>> b_red, b_green, b_blue, b_alpha;
+		b_red = apply_blur(red, kernel);
+		b_green = apply_blur(green, kernel);
+		b_blue = apply_blur(blue, kernel);
+
+		if (!alpha.empty()){
+			b_alpha = apply_blur(alpha, kernel);
+		}
+
+		for (size_t i = 0; i < red.size(); i++){
+			for (size_t j = 0; j < red[0].size(); j++){
+				red[i][j] = red[i][j] * edges[i][j] + b_red[i][j] * (1 - edges[i][j]);
+				green[i][j] = green[i][j] * edges[i][j] + b_green[i][j] * (1 - edges[i][j]);
+				blue[i][j] = blue[i][j] * edges[i][j] + b_blue[i][j] * (1 - edges[i][j]);
+				if (!alpha.empty()){
+					alpha[i][j] = alpha[i][j] * edges[i][j] + b_alpha[i][j] * (1 - edges[i][j]);
+				}
+			}
+		}
 	}
 
 	// PROCESSING
@@ -383,13 +313,28 @@ int main(int argc, char* argv[]){
 	// POSTPROCESSING
 
 	if (args.antialiasing > 0){
-		edges = rgb_to_greyscale(red, green, blue);
-		edges = detect_edges_sobel(edges, 255);
-		vector<vector<bool>> mask = make_mask(edges, 128);
-		vector<vector<float>> kernel = g_kernel(2 * args.antialiasing + 1, static_cast<float>(args.antialiasing) / 6.0f);
-		red = apply_blur(red, kernel, mask);
-		green = apply_blur(green, kernel, mask);
-		blue = apply_blur(blue, kernel, mask);
+		grey = rgb_to_greyscale(red, green, blue);
+		edges = detect_edges_sobel(grey);
+		vector<vector<float>> kernel = g_kernel(2 * args.antialiasing + 1, static_cast<float>(args.antialiasing) / 3.0f);
+		vector<vector<int>> b_red, b_green, b_blue, b_alpha;
+		b_red = apply_blur(red, kernel);
+		b_green = apply_blur(green, kernel);
+		b_blue = apply_blur(blue, kernel);
+
+		if (!alpha.empty()){
+			b_alpha = apply_blur(alpha, kernel);
+		}
+
+		for (size_t i = 0; i < red.size(); i++){
+			for (size_t j = 0; j < red[0].size(); j++){
+				red[i][j] = red[i][j] * (1 - edges[i][j]) + b_red[i][j] * edges[i][j];
+				green[i][j] = green[i][j] * (1 - edges[i][j]) + b_green[i][j] * edges[i][j];
+				blue[i][j] = blue[i][j] * (1 - edges[i][j]) + b_blue[i][j] * edges[i][j];
+				if (!alpha.empty()){
+					alpha[i][j] = alpha[i][j] * (1 - edges[i][j]) + b_alpha[i][j] * edges[i][j];
+				}
+			}
+		}
 	}
 
 
