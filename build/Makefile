@@ -117,6 +117,19 @@ depend:
 .PHONY : depend
 
 #=============================================================================
+# Target rules for targets named KQ_Obj
+
+# Build rule for target.
+KQ_Obj: cmake_check_build_system
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/Makefile2 KQ_Obj
+.PHONY : KQ_Obj
+
+# fast build rule for target.
+KQ_Obj/fast:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQ_Obj.dir/build.make CMakeFiles/KQ_Obj.dir/build
+.PHONY : KQ_Obj/fast
+
+#=============================================================================
 # Target rules for targets named KQuantizer
 
 # Build rule for target.
@@ -153,6 +166,78 @@ main.cpp.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQuantizer.dir/build.make CMakeFiles/KQuantizer.dir/main.cpp.s
 .PHONY : main.cpp.s
 
+src/blur.o: src/blur.cpp.o
+.PHONY : src/blur.o
+
+# target to build an object file
+src/blur.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQ_Obj.dir/build.make CMakeFiles/KQ_Obj.dir/src/blur.cpp.o
+.PHONY : src/blur.cpp.o
+
+src/blur.i: src/blur.cpp.i
+.PHONY : src/blur.i
+
+# target to preprocess a source file
+src/blur.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQ_Obj.dir/build.make CMakeFiles/KQ_Obj.dir/src/blur.cpp.i
+.PHONY : src/blur.cpp.i
+
+src/blur.s: src/blur.cpp.s
+.PHONY : src/blur.s
+
+# target to generate assembly for a file
+src/blur.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQ_Obj.dir/build.make CMakeFiles/KQ_Obj.dir/src/blur.cpp.s
+.PHONY : src/blur.cpp.s
+
+src/palette-parsing.o: src/palette-parsing.cpp.o
+.PHONY : src/palette-parsing.o
+
+# target to build an object file
+src/palette-parsing.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQ_Obj.dir/build.make CMakeFiles/KQ_Obj.dir/src/palette-parsing.cpp.o
+.PHONY : src/palette-parsing.cpp.o
+
+src/palette-parsing.i: src/palette-parsing.cpp.i
+.PHONY : src/palette-parsing.i
+
+# target to preprocess a source file
+src/palette-parsing.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQ_Obj.dir/build.make CMakeFiles/KQ_Obj.dir/src/palette-parsing.cpp.i
+.PHONY : src/palette-parsing.cpp.i
+
+src/palette-parsing.s: src/palette-parsing.cpp.s
+.PHONY : src/palette-parsing.s
+
+# target to generate assembly for a file
+src/palette-parsing.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQ_Obj.dir/build.make CMakeFiles/KQ_Obj.dir/src/palette-parsing.cpp.s
+.PHONY : src/palette-parsing.cpp.s
+
+src/reshaping.o: src/reshaping.cpp.o
+.PHONY : src/reshaping.o
+
+# target to build an object file
+src/reshaping.cpp.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQ_Obj.dir/build.make CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o
+.PHONY : src/reshaping.cpp.o
+
+src/reshaping.i: src/reshaping.cpp.i
+.PHONY : src/reshaping.i
+
+# target to preprocess a source file
+src/reshaping.cpp.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQ_Obj.dir/build.make CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.i
+.PHONY : src/reshaping.cpp.i
+
+src/reshaping.s: src/reshaping.cpp.s
+.PHONY : src/reshaping.s
+
+# target to generate assembly for a file
+src/reshaping.cpp.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/KQ_Obj.dir/build.make CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.s
+.PHONY : src/reshaping.cpp.s
+
 # Help Target
 help:
 	@echo "The following are some of the valid targets for this Makefile:"
@@ -161,10 +246,20 @@ help:
 	@echo "... depend"
 	@echo "... edit_cache"
 	@echo "... rebuild_cache"
+	@echo "... KQ_Obj"
 	@echo "... KQuantizer"
 	@echo "... main.o"
 	@echo "... main.i"
 	@echo "... main.s"
+	@echo "... src/blur.o"
+	@echo "... src/blur.i"
+	@echo "... src/blur.s"
+	@echo "... src/palette-parsing.o"
+	@echo "... src/palette-parsing.i"
+	@echo "... src/palette-parsing.s"
+	@echo "... src/reshaping.o"
+	@echo "... src/reshaping.i"
+	@echo "... src/reshaping.s"
 .PHONY : help
 
 

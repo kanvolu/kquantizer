@@ -91,9 +91,15 @@ KQuantizer_OBJECTS = \
 "CMakeFiles/KQuantizer.dir/main.cpp.o"
 
 # External object files for target KQuantizer
-KQuantizer_EXTERNAL_OBJECTS =
+KQuantizer_EXTERNAL_OBJECTS = \
+"/home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles/KQ_Obj.dir/src/blur.cpp.o" \
+"/home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles/KQ_Obj.dir/src/palette-parsing.cpp.o" \
+"/home/kanvolu/Documents/Dev_Projects/kquantizer/build/CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o"
 
 KQuantizer: CMakeFiles/KQuantizer.dir/main.cpp.o
+KQuantizer: CMakeFiles/KQ_Obj.dir/src/blur.cpp.o
+KQuantizer: CMakeFiles/KQ_Obj.dir/src/palette-parsing.cpp.o
+KQuantizer: CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o
 KQuantizer: CMakeFiles/KQuantizer.dir/build.make
 KQuantizer: CMakeFiles/KQuantizer.dir/compiler_depend.ts
 KQuantizer: CMakeFiles/KQuantizer.dir/link.txt

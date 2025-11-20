@@ -1,18 +1,19 @@
-#pragma once
-
 #include <iostream>
 #include <vector>
 #include <string>
 #include <fstream>
 #include <algorithm>
 
-template <typename T>
-std::vector<T> parse_colors(const std::string& line){
-	std::vector<T> color;
+#include "palette-parsing.h"
+
+std::vector<int> parse_colors(const std::string& line){
 	size_t index1 = 0;
 	size_t index2 = 0;
 	std::string value_s;
-	T value;
+	int value;
+	
+	std::vector<int> color;
+	color.reserve(3);
 
 	// TODO make error checking to check if there are any non-numeric values on the line
 
@@ -51,10 +52,10 @@ std::string clean_line(std::string line){
 	return line;
 }
 
-template <typename T>
-std::vector<std::vector<T>> import_palette(const std::string file, const std::string name){
-	std::vector<std::vector<T>> palette;
-	std::vector<T> color;
+
+std::vector<std::vector<int>> import_palette(const std::string file, const std::string name){
+	std::vector<std::vector<int>> palette;
+	std::vector<int> color;
  	std::ifstream raw(file);
 	std::string line;
 	size_t block;
@@ -79,7 +80,7 @@ std::vector<std::vector<T>> import_palette(const std::string file, const std::st
    		} else if (end != std::string::npos){
    			break;
    		} else {
-   			color = parse_colors<T>(line);
+   			color = parse_colors(line);
    			palette.push_back(color);
    		}
    	}
@@ -87,9 +88,9 @@ std::vector<std::vector<T>> import_palette(const std::string file, const std::st
 	return palette;
 }
 
-template <typename T>
-bool sort_color_list(std::vector<std::vector<T>> &list, std::vector<T> * brightness_list = nullptr){
-    std::sort(list.begin(), list.end(), [](std::vector<T> a, std::vector<T> b){
+
+bool sort_color_list(std::vector<std::vector<int>> &list, std::vector<int> * brightness_list){
+    std::sort(list.begin(), list.end(), [](std::vector<int> a, std::vector<int> b){
         return ((a[0] + a[1] + a[2]) / 3) < ((b[0] + b[1] + b[2]) / 3);
     });
 

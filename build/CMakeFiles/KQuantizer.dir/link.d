@@ -3,6 +3,9 @@ KQuantizer: \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/crti.o \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o \
   CMakeFiles/KQuantizer.dir/main.cpp.o \
+  CMakeFiles/KQ_Obj.dir/src/blur.cpp.o \
+  CMakeFiles/KQ_Obj.dir/src/palette-parsing.cpp.o \
+  CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libstdc++.so \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libm.so \
   /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libm.so \
@@ -38,6 +41,12 @@ KQuantizer: \
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/crtbeginS.o:
 
 CMakeFiles/KQuantizer.dir/main.cpp.o:
+
+CMakeFiles/KQ_Obj.dir/src/blur.cpp.o:
+
+CMakeFiles/KQ_Obj.dir/src/palette-parsing.cpp.o:
+
+CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/../../../../lib/libstdc++.so:
 

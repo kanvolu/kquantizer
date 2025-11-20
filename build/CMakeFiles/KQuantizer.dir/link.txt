@@ -1,1 +1,1 @@
-/usr/bin/c++ -g -Wl,--dependency-file=CMakeFiles/KQuantizer.dir/link.d CMakeFiles/KQuantizer.dir/main.cpp.o -o KQuantizer
+/usr/bin/c++ -Wl,--dependency-file=CMakeFiles/KQuantizer.dir/link.d CMakeFiles/KQuantizer.dir/main.cpp.o CMakeFiles/KQ_Obj.dir/src/blur.cpp.o "CMakeFiles/KQ_Obj.dir/src/palette-parsing.cpp.o" CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o -o KQuantizer
