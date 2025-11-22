@@ -25,11 +25,7 @@ grid<float> g_kernel(size_t size, float deviation){
 		}
 	}
 
-	for (size_t i = 0; i < size; i++){ // normalize kernel
-		for (size_t j = 0; j < size; j++){
-			kernel[i][j] /= sum;
-		}
-	}
+	kernel /= sum;
 	
 	return kernel;
 }
@@ -37,23 +33,46 @@ grid<float> g_kernel(size_t size, float deviation){
 grid<int> convolve (grid<int> mat, grid<float> const &kernel, grid<float> const * mask){
 	grid<int> padded = mat;
 	padded.pad(kernel.height() / 2);
-	
-	for (size_t start_y = 0; start_y < mat.height(); start_y++){
-		for (size_t start_x = 0; start_x < mat.width(); start_x++){
+
+	//invariants
+	size_t const mh = mat.height();
+	size_t const mw = mat.width();
+	size_t const kh = kernel.height();
+	size_t const kw = kernel.width();
+
+
+	if (!mask) {
+
+	for (size_t start_y = 0; start_y < mh; start_y++){
+		for (size_t start_x = 0; start_x < mw; start_x++){
 			float sum = 0;
-			for (size_t i = 0; i < kernel.height(); i++){
-				for (size_t j = 0; j < kernel.width(); j++){
+			for (size_t i = 0; i < kh; i++){
+				for (size_t j = 0; j < kw; j++){
 					sum += padded[start_y + i][start_x + j] * kernel[i][j];
 				}
 			}
-			if (mask == nullptr){
-				mat[start_y][start_x] = sum;
-			} else {
-				mat[start_y][start_x] = mat[start_y][start_x] * (*mask)[start_y][start_x] + sum * (1 - (*mask)[start_y][start_x]);
-			}
+
+			mat[start_y][start_x] = sum;
 		}
 	}
 	
+	} else {
+
+	for (size_t start_y = 0; start_y < mh; start_y++){
+		for (size_t start_x = 0; start_x < mw; start_x++){
+			float sum = 0;
+			for (size_t i = 0; i < kh; i++){
+				for (size_t j = 0; j < kw; j++){
+					sum += padded[start_y + i][start_x + j] * kernel[i][j];
+				}
+			}
+
+			mat[start_y][start_x] = mat[start_y][start_x] * (*mask)[start_y][start_x] + sum * (1 - (*mask)[start_y][start_x]);
+		}
+	}
+		
+	}
+
 	return mat;
 }
 
@@ -76,12 +95,7 @@ grid<int> dog(grid<int> const mat, float s_sigma){
 		}
 	}
 
-
-	for (size_t i = 0; i < out.height(); i++){
-		for (size_t j = 0; j < out.width(); j++){
-			out[i][j] = (out[i][j] * 255) / max;
-		}
-	}
+	out *= float(255) / float(max);
 
 	return out;
 	
@@ -104,11 +118,7 @@ grid<float> detect_edges_sobel(grid<int> const &mat){
 		}
 	}
 
-	for (size_t i = 0; i < horizontal.height(); i++){
-		for (size_t j = 0; j < horizontal.width(); j++){
-			horizontal[i][j] = horizontal[i][j] / max;
-		}
-	}
+	horizontal /= max;
 
 	return horizontal;
 }

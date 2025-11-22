@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/kanvolu/Documents/Dev_Projects/kquantizer/include
 
-CXX_FLAGS = -std=gnu++17 -Wall
+CXX_FLAGS = -g -std=gnu++17 -Wall -g -O0
 

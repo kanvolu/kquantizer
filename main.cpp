@@ -229,17 +229,19 @@ int main(int argc, char* argv[]){
 	
 		palette = import_palette("../palettes.txt", args.palette);
 		kdtree<int> palette_tree(palette);
+		//invariants for accessing raw data in the grids since the same process is applied to all pixels
+		size_t size = red.size();
+		int* __restrict r_raw = red.raw();
+		int* __restrict g_raw = green.raw();
+		int* __restrict b_raw = blue.raw();
+		vector<int> cache(3);
 
-		for (size_t i = 0; i < red.height(); i++){
-			for (size_t j = 0; j < red.width(); j++){
-				vector<int> cache_node = palette_tree.nearest({red[i][j],
-					green[i][j],
-					blue[i][j]});
+		for (size_t i = 0; i < size; i++){
+			cache = palette_tree.nearest({r_raw[i], g_raw[i], b_raw[i]});
 
-				red[i][j] = cache_node[0];
-				green[i][j] = cache_node[1];
-				blue[i][j] = cache_node[2];
-			}
+			r_raw[i] = cache[0];
+			g_raw[i] = cache[1];
+			b_raw[i] = cache[2];
 		}
 		
 		output_file = out_name(string(args.input_file), "search_" + string(args.palette));
@@ -290,6 +292,25 @@ int main(int argc, char* argv[]){
 		output_file = out_name(string(args.input_file), "bw");
 
 		
+	} else if (string(args.mode) == "blur"){
+		grid<float> kernel = g_kernel(3, 1);
+		
+		red = convolve(red, kernel);
+		green = convolve(green, kernel);
+		blue = convolve(blue, kernel);
+
+		output_file = out_name(string(args.input_file), "blur");
+	} else if (string(args.mode) == "edges") {
+		grey = rgb_to_greyscale(red, green, blue);
+		edges = detect_edges_sobel(grey);
+		edges *= 255;
+
+		red = edges;
+		green = edges;
+		blue = edges;
+
+		output_file = out_name(string(args.input_file), "edges");
+		
 	} else {
 	
 		print_help(argv[0]);
@@ -304,27 +325,15 @@ int main(int argc, char* argv[]){
 		edges = detect_edges_sobel(grey);
 		
 		grid<float> kernel = g_kernel(2 * args.antialiasing + 1, static_cast<float>(args.antialiasing) / 3.0f);
-		grid<int> b_red, b_green, b_blue, b_alpha;
-		b_red = convolve(red, kernel);
-		b_green = convolve(green, kernel);
-		b_blue = convolve(blue, kernel);
+
+		red = convolve(red, kernel, &edges);
+		green = convolve(green, kernel, &edges);
+		blue = convolve(blue, kernel, &edges);
 
 		if (!alpha.empty()){
-			b_alpha = convolve(alpha, kernel);
-		}
-
-		for (size_t i = 0; i < red.height(); i++){
-			for (size_t j = 0; j < red.width(); j++){
-				red[i][j] = red[i][j] * (1 - edges[i][j]) + b_red[i][j] * edges[i][j];
-				green[i][j] = green[i][j] * (1 - edges[i][j]) + b_green[i][j] * edges[i][j];
-				blue[i][j] = blue[i][j] * (1 - edges[i][j]) + b_blue[i][j] * edges[i][j];
-				if (!alpha.empty()){
-					alpha[i][j] = alpha[i][j] * (1 - edges[i][j]) + b_alpha[i][j] * edges[i][j];
-				}
-			}
+			alpha = convolve(alpha, kernel, &edges);
 		}
 	}
-
 
 	if (!(string(args.output_file).empty())){
 		output_file = string(args.output_file);
@@ -337,7 +346,7 @@ int main(int argc, char* argv[]){
 	
 	int error = stbi_write_bmp(output_file.c_str(), width, height, channels, output);
 
-	if (error) {
+	if (!error) {
 		cerr << "Could not export image." << endl;
 		return error;
 	}

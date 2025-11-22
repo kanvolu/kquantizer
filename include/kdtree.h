@@ -154,7 +154,7 @@ size_t minimum(){
 	return minimum_pos;
 }
 
-std::vector<T> nearest(std::vector<T> target, size_t cur_pos = 0){
+std::vector<T> nearest(std::vector<T> const &target, size_t const cur_pos = 0){
 	node cur = m_tree[cur_pos];
 	size_t k = cur.m_depth % cur.size();
 	size_t next, other;

@@ -14,16 +14,16 @@ std::vector<T> m_data;
 public:
 
 grid ()
-	: m_height (0), m_width (0), m_data() {}
+	: m_height(0), m_width(0), m_data() {}
 
 grid (size_t height, size_t width)
-	: m_height (height), m_width (width), m_data (m_height * m_width) {}
+	: m_height(height), m_width(width), m_data(m_height * m_width) {}
 
 grid (size_t height, size_t width, const T& value)
-	: m_height (height), m_width (width), m_data (m_height * m_width, value) {}
+	: m_height(height), m_width(width), m_data(m_height * m_width, value) {}
 
 grid (size_t height, size_t width, std::vector<T> data)
-	: m_height (height), m_width (width), m_data (data) {}
+	: m_height(height), m_width(width), m_data(data) {}
 
 template <typename U>
 grid(const grid<U>& other)
@@ -44,17 +44,20 @@ void reshape_raw(size_t height, size_t width){ // USED MOSTLY FOR UNINITIALIZED 
 	m_data.resize(m_height * m_width);
 }
 
-size_t size() const { return m_data.size(); }
-size_t width() const { return m_width; }
-size_t height() const { return m_height; }
-std::vector<T> data() const { return m_data; }
+inline size_t size() const { return m_data.size(); }
+inline size_t width() const { return m_width; }
+inline size_t height() const { return m_height; }
+inline std::vector<T>& data() { return m_data; }
+inline const std::vector<T>& data() const { return m_data; }
+inline T* raw() { return m_data.data(); }
+inline const T* raw() const { return m_data.data(); }
 
 // FAST ACCESS WITH NO CHECKS
-T* operator[] (size_t row_index) {
+inline T* operator[] (size_t row_index) {
 	return m_data.data() + row_index * m_width;
 }
 
-const T* operator[] (size_t row_index) const {
+inline const T* operator[] (size_t row_index) const {
 	return m_data.data() + row_index * m_width;
 }
 
@@ -67,17 +70,45 @@ const T& operator() (int row_index, int column_index) const {
 	return m_data.at(row_index * m_width + column_index);
 }
 
+
+template <typename F, typename... Args>
+void mutate (F&& func, Args&&... args) {
+	size_t size = this->size();
+	T* __restrict data = this->raw();
+
+	for (size_t i = 0; i < size; i++) {
+		func(data[i], std::forward<Args>(args)...);
+	}
+}
+
+template <typename F, typename... Args>
+grid<T> transformed (F&& func, Args&&... args) const {
+	grid<T> new_grid(this->height(), this->width());
+	const size_t size = this->size();
+	const T* __restrict data = this->raw();
+	T* __restrict new_data = new_grid.raw();
+
+	for (size_t i = 0; i < size; i++){
+		new_data[i] = func(data[i], std::forward<Args>(args)...);
+	}
+
+	return new_grid;
+}
+
+// SHAPING
 void resize (size_t height, size_t width, const T& value = T{}) {
 	std::vector<T> new_data(height * width, value);
-
+	// invariants
 	size_t min_height = std::min(height, m_height);
 	size_t min_width = std::min(width, m_width);
+	T* raw = m_data.data();
+	T* new_raw = new_data.data();
 	
 	for (size_t i = 0; i < min_height; i++){
 		std::copy_n(
-			m_data.data() + i * m_width,
+			raw + i * m_width,
 			min_width,
-			new_data.data() + i * width
+			new_raw + i * width
 		);
 	}
 
@@ -223,5 +254,227 @@ void print() {
 	std::cout << std::endl;
 }
 
-};
+// UNARY OPERATORS
+grid<T>& operator++ () {
+	this->mutate([](T &x){
+		return x++;
+	});
+	return *this;
+}
 
+grid<T>& operator-- () {
+	this->mutate([](T &x){
+		return x--;
+	});
+	return *this;
+}
+
+// SCALAR OPERATORS
+template <typename U>
+grid<T> operator+ (U const &scalar) const {
+	return this->transformed([](T const &x, U const &s){
+		return x + s;
+	}, scalar);
+}
+
+
+template <typename U>
+grid<T>& operator+= (U const &scalar) {
+	this->mutate([](T &x, U const &s){
+		return x += s;
+	}, scalar);
+	return *this;
+}
+
+template <typename U>
+grid<T> operator- (U const &scalar) const {
+	return this->transformed([](T const &x, U const &s){
+		return x - s;
+	}, scalar);
+}
+
+
+template <typename U>
+grid<T>& operator-= (U const &scalar) {
+	this->mutate([](T &x, U const &s){
+		return x -= s;
+	}, scalar);
+	return *this;
+}
+
+template <typename U>
+grid<T> operator* (U const &scalar) const {
+	return this->transformed([](T const &x, U const &s){
+		return x * s;
+	}, scalar);
+}
+
+template <typename U>
+grid<T>& operator*= (U const &scalar) {
+	this->mutate([](T &x, U const &s){
+		return x *= s;
+	}, scalar);
+	return *this;
+}
+
+template <typename U>
+grid<T> operator/ (U const &scalar) const {
+	return this->transformed([](T const &x, U const &s){
+		return x / s;
+	}, scalar);
+}
+
+template <typename U>
+grid<T>& operator/= (U const &scalar) {
+	this->mutate([](T &x, U const &s){
+		return x /= s;
+	}, scalar);
+	return *this;
+}
+
+// GRID OPERATORS
+template <typename U>
+grid<T> operator+ (grid<U> const &input) const {
+	if (this->height() != input.height() || this->width() != input.width()){
+		throw std::out_of_range("Grids to sum have different dimensions.");
+	}
+
+	grid<T> out(this->height(), this->width());
+	// invariants
+	size_t size = this->size();
+	T* __restrict out_data = out.raw();
+	const T* __restrict this_data = this->raw();
+	const U* __restrict input_data = input.raw();
+
+	for (size_t i = 0; i < size; i++){
+		out_data[i] = this_data[i] + input_data[i];
+	}
+
+	return out;
+}
+
+template <typename U>
+grid<T>& operator+= (grid<U> const &input) {
+	if (this->height() != input.height() || this->width() != input.width()){
+		throw std::out_of_range("Grids to multiply have different dimensions.");
+	}
+	
+	size_t size = this->size();
+	T* __restrict data = this->raw();
+	U* __restrict input_data = input.raw();
+	
+	for (size_t i = 0; i < size; i++){
+		data[i] += input_data[i];
+	}
+	return *this;
+}
+
+template <typename U>
+grid<T> operator- (grid<U> const &input) const {
+	if (this->height() != input.height() || this->width() != input.width()){
+		throw std::out_of_range("Grids to sum have different dimensions.");
+	}
+
+	grid<T> out(this->height(), this->width());
+	// invariants
+	size_t size = this->size();
+	T* __restrict out_data = out.raw();
+	const T* __restrict this_data = this->raw();
+	const U* __restrict input_data = input.raw();
+
+	for (size_t i = 0; i < size; i++){
+		out_data[i] = this_data[i] - input_data[i];
+	}
+
+	return out;
+}
+
+template <typename U>
+grid<T>& operator-= (grid<U> const &input) {
+	if (this->height() != input.height() || this->width() != input.width()){
+		throw std::out_of_range("Grids to multiply have different dimensions.");
+	}
+	
+	size_t size = this->size();
+	T* __restrict data = this->raw();
+	U* __restrict input_data = input.raw();
+	
+	for (size_t i = 0; i < size; i++){
+		data[i] -= input_data[i];
+	}
+	return *this;
+}
+
+template <typename U>
+grid<T> operator* (grid<U> const &input) const {
+	if (this->height() != input.height() || this->width() != input.width()){
+		throw std::out_of_range("Grids to multiply have different dimensions.");
+	}
+
+	grid<T> out(this->height(), this->width());
+	// invariants
+	size_t size = this->size();
+	T* __restrict out_data = out.raw();
+	const T* __restrict this_data = this->raw();
+	const U* __restrict input_data = input.raw();
+
+	for (size_t i = 0; i < size; i++){
+		out_data[i] = this_data[i] * input_data[i];
+	}
+
+	return out;
+}
+
+template <typename U>
+grid<T>& operator*= (grid<U> const &input) {
+	if (this->height() != input.height() || this->width() != input.width()){
+		throw std::out_of_range("Grids to multiply have different dimensions.");
+	}
+	
+	size_t size = this->size();
+	T* __restrict data = this->raw();
+	U* __restrict input_data = input.raw();
+	
+	for (size_t i = 0; i < size; i++){
+		data[i] *= input_data[i];
+	}
+	return *this;
+}
+
+template <typename U>
+grid<T> operator/ (grid<U> const &input) const {
+	if (this->height() != input.height() || this->width() != input.width()){
+		throw std::out_of_range("Grids to multiply have different dimensions.");
+	}
+
+	grid<T> out(this->height(), this->width());
+	// invariants
+	size_t size = this->size();
+	T* __restrict out_data = out.raw();
+	const T* __restrict this_data = this->raw();
+	const U* __restrict input_data = input.raw();
+
+	for (size_t i = 0; i < size; i++){
+		out_data[i] = this_data[i] / input_data[i];
+	}
+
+	return out;
+}
+
+template <typename U>
+grid<T>& operator/= (grid<U> const &input) {
+	if (this->height() != input.height() || this->width() != input.width()){
+		throw std::out_of_range("Grids to multiply have different dimensions.");
+	}
+	
+	size_t size = this->size();
+	T* __restrict data = this->raw();
+	U* __restrict input_data = input.raw();
+	
+	for (size_t i = 0; i < size; i++){
+		data[i] /= input_data[i];
+	}
+	return *this;
+}
+
+};

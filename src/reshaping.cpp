@@ -39,24 +39,8 @@ grid<int> rgb_to_greyscale(
 	grid<int> const &r,
 	grid<int> const &g,
 	grid<int> const &b
-){
-	if (
-		r.height() != g.height() || r.height() != b.height() ||
-		r.width() != g.width() || r.width() != b.width()
-	){
-		std::cerr << "Grids to convert to greyscale have different sizes." << std::endl;
-		return {};
-	}
-	
-	grid<int> out(r.height(), r.width());
-	
-	for (size_t i = 0; i < out.height(); i++){
-		for (size_t j = 0; j < out.width(); j++){
-			out[i][j] = (r[i][j] + g[i][j] + b[i][j]) / 3;
-		}
-	}
-	
-	return out;
+){	
+	return (r + g + b) / 3;
 }
 
 
