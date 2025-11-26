@@ -16,7 +16,7 @@
 
 // REQUIRED_ARG(type, name, label, description, parser)
 // label and description should be strings, e.g. "contrast" and "Contrast applied to image"
-#define REQUIRED_STRING_ARG(name, label, description) REQUIRED_ARG(char*, name, label, description, )
+#define REQUIRED_STRING_ARG(name, label, description) REQUIRED_ARG(const char*, name, label, description, )
 #define REQUIRED_CHAR_ARG(name, label, description) REQUIRED_ARG(char, name, label, description, parse_char)
 #define REQUIRED_INT_ARG(name, label, description) REQUIRED_ARG(int, name, label, description, atoi)
 #define REQUIRED_UINT_ARG(name, label, description) REQUIRED_ARG(unsigned int, name, label, description, atoi)
@@ -31,7 +31,6 @@
 // OPTIONAL_ARG(type, name, default, flag, label, description, formatter, parser)
 #define OPTIONAL_STRING_ARG(name, default, flag, label, description) OPTIONAL_ARG(const char*, name, default, flag, label, description, "%s", )
 #define OPTIONAL_CHAR_ARG(name, default, flag, label, description) OPTIONAL_ARG(char, name, default, flag, label, description, "%c", parse_char)
-#define OPTIONAL_UCHAR_ARG(name, default, flag, label, description) OPTIONAL_ARG(unsigned char, name, default, flag, label, description, "%c", parse_char)
 #define OPTIONAL_INT_ARG(name, default, flag, label, description) OPTIONAL_ARG(int, name, default, flag, label, description, "%d", atoi)
 #define OPTIONAL_UINT_ARG(name, default, flag, label, description) OPTIONAL_ARG(unsigned int, name, default, flag, label, description, "%u", atoi)
 #define OPTIONAL_LONG_ARG(name, default, flag, label, description) OPTIONAL_ARG(long, name, default, flag, label, description, "%ld", atol)

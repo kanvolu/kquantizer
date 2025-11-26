@@ -20,7 +20,7 @@ target_link_libraries(KQuantizer PRIVATE KQ_Obj)
 
 
 # --------------------- Compiler options ------------------------
-target_compile_options(KQuantizer PRIVATE -Wall)
+target_compile_options(KQuantizer PRIVATE -Wall -Werror)
 
 target_compile_options(KQuantizer PRIVATE
     $<$<CONFIG:Debug>:-g -O0>

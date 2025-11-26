@@ -2,21 +2,20 @@
 
 #include "grid.h"
 
-inline const grid<int> sobel_x(3, 3,
-	{
-	-1, 0, 1,
-	-2, 0, 2,
-	-1, 0, 1
-	}
-);
+inline const std::vector<int> sobel_xv = {
+	1,
+	2,
+	1
+};
 
-inline const grid<int> sobel_y(3, 3,
-	{
-	-1, -2, -1,
-	 0,  0,  0,
-	 1,  2,  1
-	}
-);
+inline const std::vector<int> sobel_xh = {
+	-1, 0, 1
+};
+
+inline const std::vector<int> &sobel_yv = sobel_xh;
+
+inline const std::vector<int> &sobel_yh = sobel_xv;
+
 
 float gaus(
 	float x, 

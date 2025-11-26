@@ -34,7 +34,6 @@ extern "C" {
 #include <cmath>
 #include <algorithm>
 #include <string>
-#include <future>
 
 #include "stb_image.h"
 #include "stb_image_write.h"
@@ -56,14 +55,13 @@ string out_name(string const path, string const palette){
 
 // QUANTIZATION LOGIC
 
-template <typename T>
-vector<vector<T>> retrieve_selected_colors(vector<vector<T>> &list, size_t const amount, bool by_brightness = false){
+vector<vector<int>> retrieve_selected_colors(vector<vector<int>> &list, size_t const amount, bool by_brightness = false){
 
-	vector<vector<T>> out;
+	vector<vector<int>> out;
 	size_t size = list.size();
 	
 	if (by_brightness){
-		vector<T> brightness_list;
+		vector<int> brightness_list;
 		vector<size_t> brightness_positions;
 		sort_color_list(list, &brightness_list); // it has to be sorted because we want to capture the minimum element, if we do not sort it we will always capture the first pixel instead, and it might not be the minimum
 		for (size_t i = 0; i < amount - 1; i++){
@@ -93,12 +91,12 @@ vector<vector<T>> retrieve_selected_colors(vector<vector<T>> &list, size_t const
 	return out;
 }
 
-template <typename T>
-bool quantize_2d_vector_to_list(grid<T> const &mat, 
-	vector<vector<T>> const &list, 
-	grid<T> * red, 
-	grid<T> * green, 
-	grid<T> * blue
+
+bool quantize_2d_vector_to_list(grid<int> const &mat, 
+	vector<vector<int>> const &list, 
+	grid<int> * red, 
+	grid<int> * green, 
+	grid<int> * blue
 ){
     size_t color_pos;
     size_t size = list.size();
@@ -115,8 +113,8 @@ bool quantize_2d_vector_to_list(grid<T> const &mat,
     return true;
 }
 
-template <typename T>
-grid<T> quantize_2d_vector_to_self(grid<T> mat, size_t resolution){
+
+grid<int> quantize_2d_vector_to_self(grid<int> mat, size_t resolution){
     float cache;
 
     for (size_t i = 0; i < mat.height(); i++){
@@ -128,41 +126,6 @@ grid<T> quantize_2d_vector_to_self(grid<T> mat, size_t resolution){
     
     return mat;
 }
-
-
-
-
-template <typename T>
-vector<vector<size_t>> count_repetitions(vector<vector<T>> const &red, 
-	vector<vector<T>> const &green, 
-	vector<vector<T>> const &blue, 
-	vector<vector<T>> const &palette){
-	vector<vector<size_t>> counter(palette.size(), vector<size_t>(2, 0));
-	for (size_t i = 0; i < palette.size(); i++){
-		counter[i][0] = i;
-	}
-	
-	for (size_t i = 0; i < red.size(); i++){
-		for (size_t j = 0; j < red[0].size(); j++){
-			for (size_t p = 0; p < palette.size(); p++){
-				if (red[i][j] == palette[p][0] &&
-					green[i][j] == palette[p][1] &&
-					blue[i][j] == palette[p][2])
-					{
-					counter[p][1] += 1;
-					break;
-				}
-			}
-		}
-	}
-
-	sort(counter.begin(), counter.end(), [](auto a, auto b){
-		return a[1] > b[1];
-	});
-
-	return counter;
-}
-
 
 
 int main(int argc, char* argv[]){
@@ -211,15 +174,15 @@ int main(int argc, char* argv[]){
 	
 	if (args.blur > 0){
 		grey = rgb_to_greyscale(red, green, blue);
-		edges = detect_edges_sobel(grey);
+		edges = 1 - detect_edges_sobel(grey);
 		grid<float> kernel = g_kernel(2 * args.blur + 1, static_cast<float>(args.blur) / 3.0f);
 		
-		red = convolve(red, kernel, &edges);
-		green = convolve(green, kernel, &edges);
-		blue = convolve(blue, kernel, &edges);
+		red = red.convolve(kernel, edges);
+		green = green.convolve(kernel, edges);
+		blue = blue.convolve(kernel, edges);
 
 		if (!alpha.empty()){
-			alpha = convolve(alpha, kernel);
+			alpha = alpha.convolve(kernel);
 		}
 	}
 
@@ -292,24 +255,24 @@ int main(int argc, char* argv[]){
 		output_file = out_name(string(args.input_file), "bw");
 
 		
-	} else if (string(args.mode) == "blur"){
-		grid<float> kernel = g_kernel(3, 1);
-		
-		red = convolve(red, kernel);
-		green = convolve(green, kernel);
-		blue = convolve(blue, kernel);
-
-		output_file = out_name(string(args.input_file), "blur");
-	} else if (string(args.mode) == "edges") {
-		grey = rgb_to_greyscale(red, green, blue);
-		edges = detect_edges_sobel(grey);
-		edges *= 255;
-
-		red = edges;
-		green = edges;
-		blue = edges;
-
-		output_file = out_name(string(args.input_file), "edges");
+// 	} else if (string(args.mode) == "blur"){
+// 		grid<float> kernel = g_kernel(3, 1);
+// 		
+// 		red = red.convolve(kernel);
+// 		green = green.convolve(kernel);
+// 		blue = blue.convolve(kernel);
+// 
+// 		output_file = out_name(string(args.input_file), "blur");
+// 	} else if (string(args.mode) == "edges") {
+// 		grey = rgb_to_greyscale(red, green, blue);
+// 		edges = detect_edges_sobel(grey);
+// 		edges *= 255;
+// 
+// 		red = edges;
+// 		green = edges;
+// 		blue = edges;
+// 
+// 		output_file = out_name(string(args.input_file), "edges");
 		
 	} else {
 	
@@ -322,16 +285,16 @@ int main(int argc, char* argv[]){
 	if (args.antialiasing > 0){
 	
 		grey = rgb_to_greyscale(red, green, blue);
-		edges = detect_edges_sobel(grey);
+		edges = 1 - detect_edges_sobel(grey);
 		
 		grid<float> kernel = g_kernel(2 * args.antialiasing + 1, static_cast<float>(args.antialiasing) / 3.0f);
 
-		red = convolve(red, kernel, &edges);
-		green = convolve(green, kernel, &edges);
-		blue = convolve(blue, kernel, &edges);
+		red = red.convolve(kernel, edges);
+		green = green.convolve(kernel, edges);
+		blue = blue.convolve(kernel, edges);
 
 		if (!alpha.empty()){
-			alpha = convolve(alpha, kernel, &edges);
+			alpha = alpha.convolve(kernel, edges);
 		}
 	}
 
