@@ -148,6 +148,7 @@ grid<T> convolve(grid<U> const &kernel) const {
 	grid<T> const padded = this->pad_vh(kh / 2, kw / 2);
 	grid<T> out(m_height, m_width);
 
+
 	for (size_t start_y = 0; start_y < m_height; start_y++) {
 		for (size_t start_x = 0; start_x < m_width; start_x++) {
 			std::common_type_t<T, U> sum = 0;
@@ -205,13 +206,15 @@ grid<T> convolve(std::vector<U> const &kernel) const {
 		throw std::out_of_range("Vector to convolve must have odd size.");
 	}
 
+	using C = std::common_type_t<T, U>;
+
 	grid<T> const padded = this->pad(pad);
-	grid<U> temp(m_height + 2 * pad, m_width + 2 * pad, U{});
+	grid<C> temp(m_height + 2 * pad, m_width + 2 * pad, U{});
 	grid<T> out(m_height, m_width, T{});
 
-	const U* __restrict kd = kernel.raw();
+	const U* __restrict kd = kernel.data();
 	const T* __restrict pd = padded.raw();
-	U* __restrict td = temp.raw();
+	C* __restrict td = temp.raw();
 	T* __restrict od = out.raw();
 
 	size_t pw = padded.width();
@@ -223,7 +226,7 @@ grid<T> convolve(std::vector<U> const &kernel) const {
 
 		for (size_t x = 0; x < m_width; x++) {
 			size_t start_x = x + pad;
-			std::common_type_t<T, U> sum = 0;
+			C sum = 0;
 					
 			for (size_t i = 0; i < ks; i++) {
 				sum += pd[start_y * pw + x + i] * kd[i];
@@ -237,7 +240,7 @@ grid<T> convolve(std::vector<U> const &kernel) const {
 	for (size_t y = 0; y < m_height; y++) {
 		for (size_t x = 0; x < m_width; x++) {
 			size_t start_x = x + pad;
-			std::common_type_t<T, U> sum = 0;
+			C sum = 0;
 
 			for (size_t i = 0; i < ks; i++) {
 				sum += td[(y + i) * tw + start_x] * kd[i];
@@ -261,15 +264,17 @@ grid<T> convolve(std::vector<U> const &kernel, grid<float> const &mask) const {
 		throw std::out_of_range("Maks must be the same size as the grid to convolve.");
 	}
 
+	using C = std::common_type_t<T, U, float>;
+
 	grid<T> const padded = this->pad(pad);
-	grid<U> temp(m_height + 2 * pad, m_width + 2 * pad, U{});
+	grid<C> temp(m_height + 2 * pad, m_width + 2 * pad, U{});
 	grid<T> out(m_height, m_width, T{});
 
-	const U* __restrict kd = kernel.raw();
+	const U* __restrict kd = kernel.data();
 	const T* __restrict pd = padded.raw();
 	const T* __restrict id = m_data.data();
 	const float* __restrict md = mask.raw();
-	U* __restrict td = temp.raw();
+	C* __restrict td = temp.raw();
 	T* __restrict od = out.raw();
 
 	size_t pw = padded.width();
@@ -281,7 +286,7 @@ grid<T> convolve(std::vector<U> const &kernel, grid<float> const &mask) const {
 
 		for (size_t x = 0; x < m_width; x++) {
 			size_t start_x = x + pad;
-			std::common_type_t<T, U, float> sum = 0;
+			C sum = 0;
 					
 			for (size_t i = 0; i < ks; i++) {
 				sum += pd[start_y * pw + x + i] * kd[i];
@@ -295,7 +300,7 @@ grid<T> convolve(std::vector<U> const &kernel, grid<float> const &mask) const {
 	for (size_t y = 0; y < m_height; y++) {
 		for (size_t x = 0; x < m_width; x++) {
 			size_t start_x = x + pad;
-			std::common_type_t<T, U, float> sum = 0;
+			C sum = 0;
 
 			for (size_t i = 0; i < ks; i++) {
 				sum += td[(y + i) * tw + start_x] * kd[i];
@@ -319,14 +324,16 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h)
 		throw std::out_of_range("Vector to convolve must have odd size.");
 	}
 
+	using C = std::common_type_t<T, U>;
+
 	grid<T> const padded = this->pad_vh(pad_v, pad_h);
-	grid<U> temp(m_height + 2 * pad_v, m_width + 2 * pad_h, U{});
+	grid<C> temp(m_height + 2 * pad_v, m_width + 2 * pad_h, U{});
 	grid<T> out(m_height, m_width, T{});
 
 	const U* __restrict kvd = kernel_v.data();
 	const U* __restrict khd = kernel_h.data();
 	const T* __restrict pd = padded.raw();
-	U* __restrict td = temp.raw();
+	C* __restrict td = temp.raw();
 	T* __restrict od = out.raw();
 
 	size_t pw = padded.width();
@@ -338,7 +345,7 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h)
 
 		for (size_t x = 0; x < m_width; x++) {
 			size_t start_x = x + pad_h;
-			std::common_type_t<T, U> sum = 0;
+			C sum = 0;
 					
 			for (size_t i = 0; i < khs; i++) {
 				sum += pd[start_y * pw + x + i] * khd[i];
@@ -352,7 +359,7 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h)
 	for (size_t y = 0; y < m_height; y++) {
 		for (size_t x = 0; x < m_width; x++) {
 			size_t start_x = x + pad_h;
-			std::common_type_t<T, U> sum = 0;
+			C sum = 0;
 
 			for (size_t i = 0; i < kvs; i++) {
 				sum += td[(y + i) * tw + start_x] * kvd[i];
@@ -378,8 +385,10 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h,
 		throw std::out_of_range("Maks must be the same size as the grid to convolve.");
 	}
 
+	using C = std::common_type_t<T, U>;
+
 	grid<T> const padded = this->pad_vh(pad_v, pad_h);
-	grid<U> temp(m_height + 2 * pad_v, m_width + 2 * pad_h, U{});
+	grid<C> temp(m_height + 2 * pad_v, m_width + 2 * pad_h, U{});
 	grid<T> out(m_height, m_width, T{});
 
 	const U* __restrict kvd = kernel_v.data();
@@ -387,7 +396,7 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h,
 	const T* __restrict pd = padded.raw();
 	const T* __restrict id = m_data.data();
 	const float* __restrict md = mask.raw();
-	U* __restrict td = temp.raw();
+	C* __restrict td = temp.raw();
 	T* __restrict od = out.raw();
 
 	size_t pw = padded.width();
@@ -399,7 +408,7 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h,
 
 		for (size_t x = 0; x < m_width; x++) {
 			size_t start_x = x + pad_h;
-			std::common_type_t<T, U, float> sum = 0;
+			C sum = 0;
 					
 			for (size_t i = 0; i < khs; i++) {
 				sum += pd[start_y * pw + x + i] * khd[i];
@@ -413,7 +422,7 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h,
 	for (size_t y = 0; y < m_height; y++) {
 		for (size_t x = 0; x < m_width; x++) {
 			size_t start_x = x + pad_h;
-			std::common_type_t<T, U, float> sum = 0;
+			C sum = 0;
 
 			for (size_t i = 0; i < kvs; i++) {
 				sum += td[(y + i) * tw + start_x] * kvd[i];

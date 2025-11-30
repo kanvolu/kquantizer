@@ -56,7 +56,9 @@ CMakeFiles/KQuantizer.dir/main.cpp.o: /home/kanvolu/Documents/Dev_Projects/kquan
   /usr/include/bits/stdint-intn.h \
   /usr/include/bits/stdint-least.h \
   /usr/include/bits/stdint-uintn.h \
+  /usr/include/bits/stdio.h \
   /usr/include/bits/stdio_lim.h \
+  /usr/include/bits/stdlib-bsearch.h \
   /usr/include/bits/stdlib-float.h \
   /usr/include/bits/struct_mutex.h \
   /usr/include/bits/struct_rwlock.h \
@@ -338,6 +340,10 @@ CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o:
 
 /usr/include/sys/types.h:
 
+/usr/include/sys/single_threaded.h:
+
+/usr/include/sys/select.h:
+
 /usr/include/assert.h:
 
 /usr/include/c++/15.2.1/cstdio:
@@ -345,10 +351,6 @@ CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o:
 /usr/include/bits/endian.h:
 
 /usr/include/c++/15.2.1/bits/stl_function.h:
-
-/usr/include/c++/15.2.1/bits/locale_facets.h:
-
-/usr/include/c++/15.2.1/ext/string_conversions.h:
 
 /usr/include/c++/15.2.1/bits/cxxabi_init_exception.h:
 
@@ -369,10 +371,6 @@ CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o:
 /usr/include/c++/15.2.1/algorithm:
 
 /usr/include/c++/15.2.1/bits/postypes.h:
-
-/usr/include/bits/posix2_lim.h:
-
-/usr/include/c++/15.2.1/bits/stl_bvector.h:
 
 /usr/include/c++/15.2.1/bits/hash_bytes.h:
 
@@ -418,10 +416,6 @@ CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o:
 
 /usr/include/c++/15.2.1/streambuf:
 
-/usr/include/c++/15.2.1/bits/predefined_ops.h:
-
-/usr/include/bits/types/struct_itimerspec.h:
-
 /usr/include/bits/struct_rwlock.h:
 
 /usr/include/bits/types/sigset_t.h:
@@ -454,6 +448,12 @@ CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o:
 
 /usr/include/c++/15.2.1/type_traits:
 
+/usr/lib/libc.so:
+
+/usr/include/bits/pthreadtypes.h:
+
+/usr/include/c++/15.2.1/tr1/beta_function.tcc:
+
 /usr/include/bits/atomic_wide_counter.h:
 
 /usr/include/c++/15.2.1/pstl/execution_defs.h:
@@ -482,20 +482,6 @@ CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o:
 
 /usr/include/c++/15.2.1/bits/cpp_type_traits.h:
 
-/usr/include/c++/15.2.1/bits/istream.tcc:
-
-/usr/include/c++/15.2.1/limits:
-
-/usr/include/c++/15.2.1/bits/stl_construct.h:
-
-/usr/include/bits/struct_mutex.h:
-
-/usr/lib/libc.so:
-
-/usr/include/bits/pthreadtypes.h:
-
-/usr/include/c++/15.2.1/tr1/beta_function.tcc:
-
 /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/stddef.h:
 
 /usr/include/asm-generic/int-ll64.h:
@@ -507,10 +493,6 @@ CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o:
 /usr/include/wchar.h:
 
 /usr/include/bits/posix1_lim.h:
-
-/usr/include/c++/15.2.1/bits/locale_facets.tcc:
-
-/usr/include/asm/posix_types_64.h:
 
 /usr/include/bits/time.h:
 
@@ -538,6 +520,16 @@ CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o:
 
 /usr/include/bits/floatn-common.h:
 
+/usr/include/bits/types/time_t.h:
+
+/usr/include/c++/15.2.1/math.h:
+
+/usr/include/c++/15.2.1/bits/charconv.h:
+
+/usr/include/bits/mathcalls-helper-functions.h:
+
+/usr/include/string.h:
+
 /usr/include/bits/types/clock_t.h:
 
 /usr/include/c++/15.2.1/bits/exception_ptr.h:
@@ -551,6 +543,14 @@ CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o:
 /usr/include/c++/15.2.1/bit:
 
 /usr/include/c++/15.2.1/bits/basic_ios.h:
+
+/usr/include/bits/posix2_lim.h:
+
+/usr/include/asm/posix_types_64.h:
+
+/usr/include/c++/15.2.1/bits/locale_facets.tcc:
+
+/usr/include/c++/15.2.1/bits/stl_bvector.h:
 
 /usr/include/bits/types/struct_FILE.h:
 
@@ -600,6 +600,14 @@ CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o:
 
 /usr/include/bits/mathcalls-narrow.h:
 
+/usr/include/bits/stdio.h:
+
+/home/kanvolu/Documents/Dev_Projects/kquantizer/include/stb_image.h:
+
+/usr/include/c++/15.2.1/debug/assertions.h:
+
+/usr/include/c++/15.2.1/new:
+
 /usr/lib/crtn.o:
 
 /usr/include/c++/15.2.1/bits/functional_hash.h:
@@ -607,12 +615,6 @@ CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o:
 /usr/include/bits/types/cookie_io_functions_t.h:
 
 /usr/include/c++/15.2.1/bits/stl_algobase.h:
-
-/home/kanvolu/Documents/Dev_Projects/kquantizer/include/stb_image.h:
-
-/usr/include/c++/15.2.1/debug/assertions.h:
-
-/usr/include/c++/15.2.1/new:
 
 /usr/include/c++/15.2.1/cstdlib:
 
@@ -644,21 +646,29 @@ CMakeFiles/KQ_Obj.dir/src/reshaping.cpp.o:
 
 /usr/include/bits/stdint-intn.h:
 
+/usr/include/bits/stdlib-bsearch.h:
+
 /usr/include/features.h:
 
 /usr/include/bits/sched.h:
 
 /usr/include/bits/types/__FILE.h:
 
-/usr/include/bits/types/time_t.h:
+/usr/include/c++/15.2.1/bits/locale_facets.h:
 
-/usr/include/c++/15.2.1/math.h:
+/usr/include/bits/types/struct_itimerspec.h:
 
-/usr/include/c++/15.2.1/bits/charconv.h:
+/usr/include/c++/15.2.1/bits/predefined_ops.h:
 
-/usr/include/bits/mathcalls-helper-functions.h:
+/usr/include/c++/15.2.1/ext/string_conversions.h:
 
-/usr/include/string.h:
+/usr/include/c++/15.2.1/bits/istream.tcc:
+
+/usr/include/bits/struct_mutex.h:
+
+/usr/include/c++/15.2.1/bits/stl_construct.h:
+
+/usr/include/c++/15.2.1/limits:
 
 /usr/include/c++/15.2.1/bits/localefwd.h:
 
@@ -869,7 +879,3 @@ CMakeFiles/KQ_Obj.dir/src/blur.cpp.o:
 /usr/include/bits/wordsize.h:
 
 /usr/include/stdio.h:
-
-/usr/include/sys/select.h:
-
-/usr/include/sys/single_threaded.h:

@@ -6,5 +6,5 @@ CXX_DEFINES =
 
 CXX_INCLUDES = -I/home/kanvolu/Documents/Dev_Projects/kquantizer/include
 
-CXX_FLAGS = -g -std=gnu++17 -Wall -Werror -g -O0
+CXX_FLAGS = -O3 -DNDEBUG -std=gnu++17 -Wall -Werror -O3 -march=native
 

@@ -11,6 +11,7 @@
     OPTIONAL_UINT_ARG(resolution, 8, "-r", "resolution", "Amount of colors for self and self-sort modes") \
     OPTIONAL_UINT_ARG(blur, 0, "-b", "blur", "Blur radius for edge detection based blur before quantization") \
     OPTIONAL_UINT_ARG(antialiasing, 0, "-a", "antialiasing", "Smooth edges after processing") \
+    OPTIONAL_UINT_ARG(quality, 80, "-q", "quality", "Number between 1 and 100 for quality to export .jpg images") \
     OPTIONAL_STRING_ARG(output_file, "", "-o", "output", "Output file path") \
 
 #define BOOLEAN_ARGS \
@@ -47,7 +48,7 @@ extern "C" {
 
 using namespace std;
 
-string out_name(string const path, string const palette){
+string out_name(string const path, string const palette){ // TODO make the process of making the output file name less cumbersome
 	size_t pos = path.rfind(".");
 	return path.substr(0, pos) + "_" + palette + path.substr(pos);
 }
@@ -175,7 +176,7 @@ int main(int argc, char* argv[]){
 	if (args.blur > 0){
 		grey = rgb_to_greyscale(red, green, blue);
 		edges = 1 - detect_edges_sobel(grey);
-		grid<float> kernel = g_kernel(2 * args.blur + 1, static_cast<float>(args.blur) / 3.0f);
+		grid<float> kernel = g_kernel(2 * args.blur + 1, static_cast<float>(args.blur) / 1.5f);
 		
 		red = red.convolve(kernel, edges);
 		green = green.convolve(kernel, edges);
@@ -188,7 +189,7 @@ int main(int argc, char* argv[]){
 
 	// PROCESSING
 	
-	if (string(args.mode) == "search"){
+	if (string(args.mode) == "search"){ // TODO make resolution work by finding the farthest points apart from eachother in the 3D set that is the palette
 	
 		palette = import_palette("../palettes.txt", args.palette);
 		kdtree<int> palette_tree(palette);
@@ -282,13 +283,13 @@ int main(int argc, char* argv[]){
 
 	// POSTPROCESSING
 
-	if (args.antialiasing > 0){
+	if (args.antialiasing > 0){ // TODO make actual antialiasing
 	
 		grey = rgb_to_greyscale(red, green, blue);
-		edges = 1 - detect_edges_sobel(grey);
+		edges = detect_edges_sobel(grey);
 		
-		grid<float> kernel = g_kernel(2 * args.antialiasing + 1, static_cast<float>(args.antialiasing) / 3.0f);
-
+		grid<float> kernel = g_kernel(2 * args.antialiasing + 1, float(args.antialiasing) / 1.5f);
+		
 		red = red.convolve(kernel, edges);
 		green = green.convolve(kernel, edges);
 		blue = blue.convolve(kernel, edges);
@@ -298,16 +299,44 @@ int main(int argc, char* argv[]){
 		}
 	}
 
+	
 	if (!(string(args.output_file).empty())){
 		output_file = string(args.output_file);
-		// cout << "writing image to " + output_file << endl;
 	}
 
+	string extension = output_file.substr(output_file.rfind('.'));
+
 	// EXPORTING
+
+	unsigned char * output;
+
+	if (channels == 4) {
+		output = flatten(&red, &green, &blue, &alpha);
+	} else {
+		output = flatten(&red, &green, &blue);
+	}
+
+	// TODO make printing image to the terminal possible
+
+	int error;
 	
-	unsigned char * output = flatten(&red, &green, &blue);
+	if (extension == ".png") {
+		error = stbi_write_png(output_file.c_str(), width, height, channels, output, 0);
+	} else if (extension == ".bmp" || extension == ".dib") {
+		error = stbi_write_bmp(output_file.c_str(), width, height, channels, output);
+	} else if (extension == ".tga" || extension == ".icb" || extension == ".vda") {
+		error = stbi_write_tga(output_file.c_str(), width, height, channels, output);
+	} else if (extension == ".jpg" || extension == ".jpeg" || extension == ".jpe" || extension == ".jif" || extension == ".jfif" || extension == ".jfi") {
+		error = stbi_write_jpg(output_file.c_str(), width, height, channels, output, args.quality);
+	} else if (extension == ".hdr") {
+		// TODO Make exporting to hdr work
+		cout << "Exporting to hdr does not work yet" << endl;
+		error = 0;
+	} else {
+		cout << "Format of the image to export could not be recognized\n" << "Exporting as png..." << endl;
+		error = stbi_write_png((output_file + ".png").c_str(), width, height, channels, output, 0);
+	}
 	
-	int error = stbi_write_bmp(output_file.c_str(), width, height, channels, output);
 
 	if (!error) {
 		cerr << "Could not export image." << endl;
