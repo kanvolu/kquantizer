@@ -4,7 +4,7 @@ KQuantizer is a very simple CLI color quantizer for images. It takes a path and 
 
 Currently it has 5 modes:
 - search
-- equistant
+- equidistant
 - self
 - self-sort
 - bw
@@ -76,7 +76,7 @@ You can always see what options are available by passing ```-h```.
 
 ## Palettes
 
-Currently has only 3 palettes but you can add your own since it sources them from the ```palettes.txt``` file.
+Currently has only 3 palettes but you can add your own since it sources them from the ```palettes.txt``` file that is located in ```../palettes.txt```. You can also move it to ```~/.config/kquantizer/palettes.txt```.
 
 The syntax is quite simple, you denote a new palette with ```[]``` and then you just list your RGB values between 0 and 255. Here is an example:
 ~~~
@@ -109,4 +109,11 @@ cmake --build .
 And to execute it you have to ```cd``` to the directory that contains the executable, if you compiled the code yourself it will be ```kquantizer/build```, and run
 ~~~
 ./KQuantizer <input> <mode> [OPTIONS]
+~~~
+
+As a workaround you can set up an alias to the path of the executable and copy ```palettes.txt``` to ```~/.config/kquantizer/```, that way you can access it from anywhere in your system.
+You can set it up without breaking anything this way:
+~~~shell
+cd kquantizer
+ln palettes.txt ~/.config/kquantizer/palettes.txt
 ~~~

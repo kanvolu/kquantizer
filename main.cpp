@@ -48,6 +48,8 @@ extern "C" {
 
 using namespace std;
 
+// TODO move to std::filesystem instead of using raw strings
+
 string out_name(string const path, string const append){
 	size_t pos = path.rfind(".");
 	return path.substr(0, pos) + "_" + append + path.substr(pos);
@@ -213,7 +215,7 @@ int main(int argc, char* argv[]){
 	
 	if (string(args.mode) == "search"){ // TODO make resolution work by finding the farthest points apart from eachother in the 3D set that is the palette
 	
-		palette = import_palette("../palettes.txt", args.palette);
+		palette = import_palette(args.palette);
 		if (palette.empty()) return 1;
 		kdtree<int> palette_tree(palette);
 		//invariants for accessing raw data in the grids since the same process is applied to all pixels
@@ -237,7 +239,7 @@ int main(int argc, char* argv[]){
 	} else if (string(args.mode) == "equidistant"){
 	
 		grey = rgb_to_greyscale(red, green, blue);
-		palette = import_palette("../palettes.txt", args.palette);
+		palette = import_palette(args.palette);
 		if (palette.empty()) return 1;
 		
 		sort_color_list(palette);

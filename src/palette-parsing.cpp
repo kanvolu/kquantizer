@@ -3,6 +3,7 @@
 #include <string>
 #include <fstream>
 #include <algorithm>
+#include <filesystem>
 
 #include "palette-parsing.h"
 
@@ -52,11 +53,28 @@ std::string clean_line(std::string line){
 	return line;
 }
 
+std::string find_palette_path() {
+	std::string const config_path = std::filesystem::path(std::filesystem::path(getenv("HOME")) / ".config/kquantizer/palettes.txt");
+	if (std::filesystem::exists("../palettes.txt")){
+		return "../palettes.txt";
+	} else if (std::filesystem::exists(config_path)) {
+		return config_path;
+	} else {		
+		return {};
+	}
+} 
 
-std::vector<std::vector<int>> import_palette(const std::string file, const std::string name){
+
+std::vector<std::vector<int>> import_palette(const std::string name){
+	std::string filepath = find_palette_path();
+	if (filepath.empty()) {
+		std::cout << "Could not locate file path.\n" <<
+		"It must be either ../palettes.txt or ~/.config/kquantizer/palettes.txt" << std::endl;
+		return {};
+	}
 	std::vector<std::vector<int>> palette;
 	std::vector<int> color;
- 	std::ifstream raw(file);
+ 	std::ifstream raw(filepath);
 	std::string line;
 	size_t block;
 	
