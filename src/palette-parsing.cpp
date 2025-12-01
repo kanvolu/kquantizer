@@ -25,7 +25,7 @@ std::vector<int> parse_colors(const std::string& line){
 			value = stoi(value_s);
 			color.push_back(value);
 		} else {
-			std::cerr << "COULD NOT PARSE COLORS." << std::endl;
+			std::cerr << "Could not parse colors" << std::endl;
 			return {};
 		}
 	}
@@ -69,7 +69,7 @@ std::vector<std::vector<int>> import_palette(const std::string file, const std::
     }
 
     if (block == std::string::npos){
-    	std::cerr << "Palette was not found." << std::endl;
+    	std::cerr << "Could not find palette" << std::endl;
     	return {};
     }
     

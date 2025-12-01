@@ -5,7 +5,7 @@
  
 #define REQUIRED_ARGS \
 	REQUIRED_STRING_ARG(input_file, "input", "Input file path") \
-	REQUIRED_STRING_ARG(mode, "mode", "Mode for quantization, options are: search, equidistant, self, self-sort")
+	REQUIRED_STRING_ARG(mode, "mode", "Mode for quantization, options are: search, equidistant, self, self-sort, bw")
 #define OPTIONAL_ARGS \
     OPTIONAL_STRING_ARG(palette, "nord", "-p", "palette", "Palette used for search and equidistant modes") \
     OPTIONAL_UINT_ARG(resolution, 8, "-r", "resolution", "Amount of colors for self and self-sort modes") \
@@ -48,9 +48,27 @@ extern "C" {
 
 using namespace std;
 
-string out_name(string const path, string const palette){ // TODO make the process of making the output file name less cumbersome
+string out_name(string const path, string const append){
 	size_t pos = path.rfind(".");
-	return path.substr(0, pos) + "_" + palette + path.substr(pos);
+	return path.substr(0, pos) + "_" + append + path.substr(pos);
+}
+
+bool is_extension_supported(string const path) {
+	string extension = path.substr(path.rfind("."));
+	return (
+		extension == ".png" ||
+		extension == ".bmp" ||
+		extension == ".dib" ||
+		extension == ".tga" ||
+		extension == ".icb" ||
+		extension == ".vda" ||
+		extension == ".jpg" ||
+		extension == ".jpeg" ||
+		extension == ".jpe" ||
+		extension == ".jif" ||
+		extension == ".jfif" ||
+		extension == ".jfi"
+	);
 }
 
 
@@ -140,10 +158,14 @@ int main(int argc, char* argv[]){
     }
 
 	if (args.resolution < 2){
-		cerr << "Resolution must be equal or greater than 2." << endl;
+		cerr << "Resolution must be equal or greater than 2" << endl;
 		return 1;
 	}
 
+	if (!is_extension_supported(string(args.input_file))) {
+		cout << "Image format not supported" << endl;
+		return 1;
+	}
 
 	// IMPORT
 	
@@ -154,7 +176,7 @@ int main(int argc, char* argv[]){
 	
 	if (!data) {
 	    cerr << "Failed to load image: " << stbi_failure_reason() << endl;
-	    return 1; // or handle error
+	    return 1;
 	}
 	
 
@@ -192,6 +214,7 @@ int main(int argc, char* argv[]){
 	if (string(args.mode) == "search"){ // TODO make resolution work by finding the farthest points apart from eachother in the 3D set that is the palette
 	
 		palette = import_palette("../palettes.txt", args.palette);
+		if (palette.empty()) return 1;
 		kdtree<int> palette_tree(palette);
 		//invariants for accessing raw data in the grids since the same process is applied to all pixels
 		size_t size = red.size();
@@ -215,6 +238,7 @@ int main(int argc, char* argv[]){
 	
 		grey = rgb_to_greyscale(red, green, blue);
 		palette = import_palette("../palettes.txt", args.palette);
+		if (palette.empty()) return 1;
 		
 		sort_color_list(palette);
 		quantize_2d_vector_to_list(grey, palette, &red, &green, &blue);
