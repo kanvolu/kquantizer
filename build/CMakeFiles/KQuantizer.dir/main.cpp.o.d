@@ -177,7 +177,13 @@ CMakeFiles/KQuantizer.dir/main.cpp.o: \
  /usr/include/c++/15.2.1/bits/uniform_int_dist.h \
  /usr/include/c++/15.2.1/bits/stl_tempbuf.h \
  /usr/include/c++/15.2.1/pstl/glue_algorithm_defs.h \
- /usr/include/c++/15.2.1/pstl/execution_defs.h \
+ /usr/include/c++/15.2.1/pstl/execution_defs.h /usr/include/sys/ioctl.h \
+ /usr/include/bits/ioctls.h /usr/include/asm/ioctls.h \
+ /usr/include/asm-generic/ioctls.h /usr/include/linux/ioctl.h \
+ /usr/include/asm/ioctl.h /usr/include/asm-generic/ioctl.h \
+ /usr/include/linux/sockios.h /usr/include/asm/sockios.h \
+ /usr/include/asm-generic/sockios.h /usr/include/bits/ioctl-types.h \
+ /usr/include/sys/ttydefaults.h \
  /home/kanvolu/Documents/Dev_Projects/kquantizer/include/stb_image.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/limits.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/15.2.1/include/syslimits.h \

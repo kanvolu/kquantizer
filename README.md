@@ -58,21 +58,22 @@ Quantizes each pixel to a band in greyscale based on brightness given the select
 
 Not every mode supports all flags or options, here is the possible options that you can pass for each one:
 - **All**
-    - Detect edges and blur everything except edges before processing ```-b```, pass a radius for the blur.
-    - Select the file output ```-o```, if not passed will append mode and palette to the name of the file.
-    - If the output file is in ```.jpg``` format you can pass ```-q``` as a number between ```1``` and ```100``` to select the export quality, if not passed it will default to ```80```. 
+    - ```-b``` Detect edges and blur everything except edges before processing, pass a radius for the blur.
+    - ```-o``` Select the file output, if not passed the program will append mode and palette to the name of the file.
+    - ```-q``` If the output file is in ```.jpg``` format you can pass a number between ```1``` and ```100``` to select the export quality, if not passed it will default to ```80```. 
+    - ```--print``` Print image to the console (only kitty protocol supported). It will prevent the image from being saved unless ```-o``` is also passed.
 - **Search**
-    - Select palette ```-p```, the default is ```nord```.
+    - ```-p``` Select palette, defaults to ```nord```.
 - **Equidistant**
-    - Select palette ```-p```, the default is ```nord```.
+    - ```-p``` Select palette, defaults to ```nord```.
 - **Self**
-    - Select resolution with ```-r```.
+    - ```-r``` Select resolution of the quantization.
 - **Self-Sort**
-    - Select resolution with ```-r```.
+    - ```-r``` Select resolution of the quantization.
 - **BW**
-    - Select resolution with ```-r```.
+    - ```-r``` Select resolution of the quantization.
     
-You can always see what options are available by passing ```-h```.
+You can always see what options are available by passing ```-h``` without any other arguments.
 
 ## Palettes
 

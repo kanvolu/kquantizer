@@ -16,6 +16,7 @@
 
 #define BOOLEAN_ARGS \
     BOOLEAN_ARG(help, "-h", "Show help") \
+    BOOLEAN_ARG(print, "--print", "Print processed image to the console without saving it unless '-o' is also passed") \
     
 
 
@@ -35,6 +36,7 @@ extern "C" {
 #include <cmath>
 #include <algorithm>
 #include <string>
+#include <sys/ioctl.h>
 
 #include "stb_image.h"
 #include "stb_image_write.h"
@@ -53,6 +55,93 @@ using namespace std;
 string out_name(string const path, string const append){
 	size_t pos = path.rfind(".");
 	return path.substr(0, pos) + "_" + append + path.substr(pos);
+}
+
+void print_image(int const height, int const width, int const channels, unsigned char const * data) {
+	//encoding in base64
+	char const b64_table[65] =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        "abcdefghijklmnopqrstuvwxyz"
+        "0123456789+/";
+        
+	size_t const data_length = height * width * channels;
+	size_t const encoded_length = ((data_length + 2) / 3) * 4;
+
+	string encoded;
+	encoded.reserve(encoded_length);
+
+	size_t i;
+	for (i = 0; i + 2  < data_length; i += 3) {
+		encoded.push_back(
+			b64_table[data[i] >> 2]);
+		encoded.push_back(
+			b64_table[((data[i] & 0x03) << 4) | (data[i+1] >> 4)]);
+		encoded.push_back(
+			b64_table[((data[i+1] & 0x0F) << 2) | (data[i+2] >> 6)]);
+		encoded.push_back(
+			b64_table[data[i+2] & 0x3F]);
+	}
+
+	if (i + 1 < data_length) {
+		encoded.push_back(
+			b64_table[data[i] >> 2]);
+		encoded.push_back(
+			b64_table[((data[i] & 0x03) << 4) | (data[i+1] >> 4)]);
+		encoded.push_back(
+			b64_table[(data[i+1] & 0x0F) << 2]);
+		encoded.push_back('=');
+	} else if (i < data_length) {
+		encoded.push_back(
+			b64_table[data[i] >> 2]);
+		encoded.push_back(
+			b64_table[(data[i] & 0x03) << 4]);
+		encoded.push_back('=');
+		encoded.push_back('=');
+	} 
+
+	// getting window dimensions
+
+	winsize w;
+
+	if (ioctl(0, TIOCGWINSZ, &w) == -1) {
+        perror("Could not retrieve terminal dimensions to print image");
+        return;
+    }
+
+    size_t p_height = w.ws_row;
+    size_t p_width = w.ws_col;
+
+    if (height < width) {
+    	p_height = height * p_width / (2 * width);  // it must be multiplied by two since rows are double the height of columns
+    } else {
+    	p_width = 2 * width * p_height / height;
+    }
+
+	// transmiting one chunk at a time
+			
+	size_t const chunk_size = 4000;
+	size_t const total = encoded.size();
+	size_t offset = 0;
+
+	while (offset < total) {
+		size_t count = min(chunk_size, total - offset);
+		string chunk = encoded.substr(offset, count);
+
+		cout << "\033_Gq=1,a=T,i=1,m=" << ((count == chunk_size) ? 1 : 0)
+			<< ",f=" << channels * 8
+			<< ",s=" << width
+			<< ",v=" << height
+			<< ",c=" << p_width
+			<< ",r=" << p_height
+			<< ";" << chunk
+			<< "\033\\"
+			<< flush;
+
+		offset += count;
+	}
+
+	cout << endl;
+
 }
 
 bool is_extension_supported(string const path) {
@@ -211,6 +300,7 @@ int main(int argc, char* argv[]){
 		}
 	}
 
+
 	// PROCESSING
 	
 	if (string(args.mode) == "search"){ // TODO make resolution work by finding the farthest points apart from eachother in the 3D set that is the palette
@@ -307,6 +397,8 @@ int main(int argc, char* argv[]){
         return 1;
 	}
 
+	delete[] data;
+	
 	// POSTPROCESSING
 
 	if (args.antialiasing > 0){ // TODO make actual antialiasing
@@ -342,32 +434,42 @@ int main(int argc, char* argv[]){
 		output = flatten(&red, &green, &blue);
 	}
 
-	// TODO make printing image to the terminal possible
+	if (args.print) print_image(height, width, channels, output);
 
-	int error;
-	
-	if (extension == ".png") {
-		error = stbi_write_png(output_file.c_str(), width, height, channels, output, 0);
-	} else if (extension == ".bmp" || extension == ".dib") {
-		error = stbi_write_bmp(output_file.c_str(), width, height, channels, output);
-	} else if (extension == ".tga" || extension == ".icb" || extension == ".vda") {
-		error = stbi_write_tga(output_file.c_str(), width, height, channels, output);
-	} else if (extension == ".jpg" || extension == ".jpeg" || extension == ".jpe" || extension == ".jif" || extension == ".jfif" || extension == ".jfi") {
-		error = stbi_write_jpg(output_file.c_str(), width, height, channels, output, args.quality);
-	} else if (extension == ".hdr") {
-		// TODO Make exporting to hdr work
-		cout << "Exporting to hdr does not work yet" << endl;
-		error = 0;
-	} else {
-		cout << "Format of the image to export could not be recognized\n" << "Exporting as png..." << endl;
-		error = stbi_write_png((output_file + ".png").c_str(), width, height, channels, output, 0);
-	}
-	
+	if (!args.print || !string(args.output_file).empty()) {
 
-	if (!error) {
-		cerr << "Could not export image." << endl;
-		return error;
+		int error;
+		
+		if (extension == ".png") {
+			error = stbi_write_png(output_file.c_str(), width, height, channels, output, 0);
+		} else if (extension == ".bmp" || extension == ".dib") {
+			error = stbi_write_bmp(output_file.c_str(), width, height, channels, output);
+		} else if (extension == ".tga" || extension == ".icb" || extension == ".vda") {
+			error = stbi_write_tga(output_file.c_str(), width, height, channels, output);
+		} else if (extension == ".jpg" || extension == ".jpeg" || extension == ".jpe" || extension == ".jif" || extension == ".jfif" || extension == ".jfi") {
+			error = stbi_write_jpg(output_file.c_str(), width, height, channels, output, args.quality);
+		} else if (extension == ".hdr") {
+			// TODO Make exporting to hdr work
+			cout << "Exporting to hdr does not work yet" << endl;
+			error = 0;
+		} else {
+			cout << "Format of the image to export could not be recognized\n" << "Exporting as png..." << endl;
+			error = stbi_write_png((output_file + ".png").c_str(), width, height, channels, output, 0);
+		}
+		
+
+		if (!error) {
+			cerr << "Could not export image." << endl;
+			return error;
+		}
+
 	}
+
+
+	delete[] output;
+	
 	    
 	return 0;
 }
+
+
