@@ -9,8 +9,8 @@ float gaus(float x, float deviation){
 	return x;
 }
 
-grid<float> g_kernel(size_t size, float deviation){
-	grid<float> kernel(size, size);
+Grid<float> g_kernel(size_t size, float deviation){
+	Grid<float> kernel(size, size);
 	float dist;
 	float sum = 0;
 	float cen = floor(size / 2);
@@ -31,13 +31,13 @@ grid<float> g_kernel(size_t size, float deviation){
 
 // EDGE DETECTION LOGIC
 
-grid<int> dog(grid<int> const mat, float s_sigma){
+Grid<int> dog(Grid<int> const mat, float s_sigma){
 	float b_sigma = 1.6 * s_sigma;
 	int kernel_radius = 3 * b_sigma;
-	grid<int> out(mat.height(), mat.width());
+	Grid<int> out(mat.height(), mat.width());
 
-	grid<int> blurred_big_sigma = mat.convolve(g_kernel(2 * kernel_radius + 1, b_sigma));
-	grid<int> blurred_small_sigma = mat.convolve(g_kernel(2 * kernel_radius + 1, s_sigma));
+	Grid<int> blurred_big_sigma = mat.convolve(g_kernel(2 * kernel_radius + 1, b_sigma));
+	Grid<int> blurred_small_sigma = mat.convolve(g_kernel(2 * kernel_radius + 1, s_sigma));
 
 	int max = 0;
 	
@@ -55,11 +55,12 @@ grid<int> dog(grid<int> const mat, float s_sigma){
 }
 
 
-grid<float> detect_edges_sobel(grid<int> const &mat){
-	grid<float> float_mat(mat);
+Grid<float> detect_edges_sobel(Grid<float> const &mat){
+	std::vector<int> const sobel_1 = { 1, 2, 1 };
+	std::vector<int> const sobel_2 = { -1, 0, 1 };
 
-	grid<float> horizontal = float_mat.convolve(sobel_xv, sobel_xh);
-	grid<float> vertical = float_mat.convolve(sobel_yv, sobel_yh);
+	Grid<float> horizontal = mat.convolve(sobel_1, sobel_2);
+	Grid<float> vertical = mat.convolve(sobel_2, sobel_1);
 
 	float max = 0;
 	for (size_t i = 0; i < horizontal.height(); i++){
@@ -74,4 +75,18 @@ grid<float> detect_edges_sobel(grid<int> const &mat){
 	horizontal /= max;
 
 	return horizontal;
+}
+
+Grid<float> detect_edges_horizontal(Grid<float> const &mat){
+	std::vector<int> const sobel_1 = { 1, 2, 1 };
+	std::vector<int> const sobel_2 = { -1, 0, 1 };
+
+	return (mat.convolve(sobel_1, sobel_2)).normalize();
+}
+
+Grid<float> detect_edges_vertical(Grid<float> const &mat) {
+	std::vector<int> const sobel_1 = { 1, 2, 1 };
+	std::vector<int> const sobel_2 = { -1, 0, 1 };
+
+	return (mat.convolve(sobel_2, sobel_1)).normalize();
 }

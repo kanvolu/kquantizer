@@ -6,17 +6,17 @@
 
 bool vectorize_to_rgb(
 	unsigned char const * data, size_t const height, size_t const width,
-	grid<int> * red,
-	grid<int> * green,
-	grid<int> * blue,
-	grid<int> * alpha
+	Grid<int> * red,
+	Grid<int> * green,
+	Grid<int> * blue,
+	Grid<int> * alpha
 ){
 	if (red == nullptr || green == nullptr || blue == nullptr){
 		std::cerr << "Trying to pass nullptr for RGB arrays" << std::endl;
 		return false;
 	}
 	
-	grid<int> * const grids[4] = {red, green, blue, alpha};
+	Grid<int> * const grids[4] = {red, green, blue, alpha};
 	size_t channels = (alpha == nullptr) ? 3 : 4;
 
 	for (size_t c = 0; c < channels; c++){
@@ -35,10 +35,10 @@ bool vectorize_to_rgb(
 }
 
 
-grid<int> rgb_to_greyscale(
-	grid<int> const &r,
-	grid<int> const &g,
-	grid<int> const &b
+Grid<int> rgb_to_greyscale(
+	Grid<int> const &r,
+	Grid<int> const &g,
+	Grid<int> const &b
 ){	
 	return (r + g + b) / 3;
 }
@@ -57,16 +57,16 @@ std::vector<std::vector<int>> vectorize_to_color_list(unsigned char const * data
 }
 
 
-unsigned char * flatten(
-	grid<int> const * red,
-	grid<int> const * green,
-	grid<int> const * blue,
-	grid<int> const * alpha
+std::vector<unsigned char> flatten(
+	Grid<int> const * red,
+	Grid<int> const * green,
+	Grid<int> const * blue,
+	Grid<int> const * alpha
 ){
     // the output array must be deleted afterwards
     
     size_t channels;
-    grid<int> const * const grids[4] = {red, green, blue, alpha};
+    Grid<int> const * const grids[4] = {red, green, blue, alpha};
 
 	if (green == nullptr){
 		channels = 1;
@@ -81,11 +81,11 @@ unsigned char * flatten(
     for (size_t c = 0; c < channels; c++){
     	if (red->height() != grids[c]->height() || red->width() != grids[c]->width()){
     		std::cerr << "Grids to flatten have different sizes." << std::endl;
-    		return nullptr;
+    		return {};
     	}
     }
 
-    unsigned char * out = new unsigned char[red->height() * red->width() * channels];
+    std::vector<unsigned char> out(red->height() * red->width() * channels);
 
     for (size_t i = 0; i < red->height(); i++){
 		for (size_t j = 0; j < red->width(); j++){

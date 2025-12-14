@@ -7,16 +7,16 @@ bool vectorize_to_rgb(
 	unsigned char const * data, 
 	size_t const height, 
 	size_t const width,
-	grid<int> * red,
-	grid<int> * green,
-	grid<int> * blue,
-	grid<int> * alpha = nullptr
+	Grid<int> * red,
+	Grid<int> * green,
+	Grid<int> * blue,
+	Grid<int> * alpha = nullptr
 );
 
-grid<int> rgb_to_greyscale(
-	grid<int> const &r,
-	grid<int> const &g,
-	grid<int> const &b
+Grid<int> rgb_to_greyscale(
+	Grid<int> const &r,
+	Grid<int> const &g,
+	Grid<int> const &b
 );
 
 std::vector<std::vector<int>> vectorize_to_color_list(
@@ -25,9 +25,9 @@ std::vector<std::vector<int>> vectorize_to_color_list(
 	size_t const channels
 );
 
-unsigned char * flatten(
-	grid<int> const * red,
-	grid<int> const * green = nullptr,
-	grid<int> const * blue = nullptr,
-	grid<int> const * alpha = nullptr
+std::vector<unsigned char> flatten(
+	Grid<int> const * red,
+	Grid<int> const * green = nullptr,
+	Grid<int> const * blue = nullptr,
+	Grid<int> const * alpha = nullptr
 );

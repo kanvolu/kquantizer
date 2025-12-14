@@ -3,30 +3,30 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
-
+#include <limits>
 
 template <typename T>
-class grid {
+class Grid {
 
 size_t m_height, m_width;
 std::vector<T> m_data;
 
 public:
 
-grid ()
+Grid ()
 	: m_height(0), m_width(0), m_data() {}
 
-grid (size_t height, size_t width)
+Grid (size_t const height, size_t const width)
 	: m_height(height), m_width(width), m_data(m_height * m_width) {}
 
-grid (size_t height, size_t width, T const &value)
+Grid (size_t const height, size_t const width, T const &value)
 	: m_height(height), m_width(width), m_data(m_height * m_width, value) {}
 
-grid (size_t height, size_t width, std::vector<T> data)
+Grid (size_t const height, size_t const width, std::vector<T> data)
 	: m_height(height), m_width(width), m_data(data) {}
 
 template <typename U>
-grid(const grid<U>& other)
+Grid (const Grid<U>& other)
 	: m_height (other.height()), m_width (other.width()), m_data (m_height * m_width)
 {
 	if constexpr (std::is_same_v<T, U>) {
@@ -38,10 +38,11 @@ grid(const grid<U>& other)
 	}
 }
 
-void reshape_raw(size_t height, size_t width){ // USED MOSTLY FOR UNINITIALIZED GRIDS
+Grid<T>& reshape_raw(size_t const height, size_t const width){ // USED MOSTLY FOR UNINITIALIZED GRIDS
 	m_height = height;
 	m_width = width;
 	m_data.resize(m_height * m_width);
+	return *this;
 }
 
 inline size_t size() const { return m_data.size(); }
@@ -53,37 +54,39 @@ inline T* raw() { return m_data.data(); }
 inline const T* raw() const { return m_data.data(); }
 
 // FAST ACCESS WITH NO CHECKS
-inline T* operator[] (size_t row_index) {
+inline T* operator[] (size_t const row_index) {
 	return m_data.data() + row_index * m_width;
 }
 
-inline const T* operator[] (size_t row_index) const {
+inline const T* operator[] (size_t const row_index) const {
 	return m_data.data() + row_index * m_width;
 }
 
 // SLOW ACCESS WITH CHECKS
-T& operator() (size_t row_index, size_t column_index) {
+T& operator() (size_t const row_index, size_t const column_index) {
 	return m_data.at(row_index * m_width + column_index);
 }
 
-const T& operator() (int row_index, int column_index) const {
+const T& operator() (int const row_index, int const column_index) const {
 	return m_data.at(row_index * m_width + column_index);
 }
 
 
 template <typename F, typename... Args>
-void mutate (F&& func, Args&&... args) {
-	size_t size = this->size();
+Grid<T>& mutate (F&& func, Args&&... args) {
+	size_t const size = this->size();
 	T* __restrict data = this->raw();
 
 	for (size_t i = 0; i < size; i++) {
 		func(data[i], std::forward<Args>(args)...);
 	}
+
+	return *this;
 }
 
 template <typename F, typename... Args>
-grid<T> transformed (F&& func, Args&&... args) const {
-	grid<T> new_grid(this->height(), this->width());
+Grid<T> transformed (F&& func, Args&&... args) const {
+	Grid<T> new_grid(this->height(), this->width());
 	const size_t size = this->size();
 	const T* __restrict data = this->raw();
 	T* __restrict new_data = new_grid.raw();
@@ -95,14 +98,43 @@ grid<T> transformed (F&& func, Args&&... args) const {
 	return new_grid;
 }
 
+T max() const {
+	const T* __restrict data = m_data.data();
+	size_t const size = m_data.size();
 
-grid<T> pad(size_t const padding, T const &value = T{}) const {
+	T max = std::numeric_limits<T>::lowest();
+	for (size_t i = 0; i < size; i++) {
+		if (max < data[i]) max = data[i];
+	}
+
+	return max;
+}
+
+T max_abs() const {
+	const T* __restrict data = m_data.data();
+	size_t const size = m_data.size();
+
+	T max = T{};
+	for (size_t i = 0; i < size; i++) {
+		if (max < std::abs(data[i])) max = std::abs(data[i]);
+	}
+
+	return max;
+}
+
+Grid<T>& normalize() {
+	T max = max_abs();
+	*this /= max;
+	return *this;
+}
+
+Grid<T> pad(size_t const padding, T const &value = T{}) const {
 	if (padding == 0) return *this;
 
 	size_t const new_height = m_height + (padding * 2);
 	size_t const new_width = m_width + (padding * 2);
 
-	grid<T> new_grid(new_height, new_width, value);
+	Grid<T> new_grid(new_height, new_width, value);
 
 	for (size_t i = 0; i < m_height; i++) {
 		std::copy_n(
@@ -116,13 +148,13 @@ grid<T> pad(size_t const padding, T const &value = T{}) const {
 }
 
 
-grid<T> pad_vh(size_t const v_pad, size_t const h_pad, T const &value = T{}) const {
+Grid<T> pad_vh(size_t const v_pad, size_t const h_pad, T const &value = T{}) const {
 	if (v_pad == 0 && h_pad == 0) return *this;
 
 	size_t const new_height = m_height + (v_pad * 2);
 	size_t const new_width = m_width + (h_pad * 2);
 
-	grid<T> new_grid(new_height, new_width, value);
+	Grid<T> new_grid(new_height, new_width, value);
 
 	for (size_t i = 0; i < m_height; i++) {
 		std::copy_n(
@@ -137,7 +169,7 @@ grid<T> pad_vh(size_t const v_pad, size_t const h_pad, T const &value = T{}) con
 
 
 template <typename U>
-grid<T> convolve(grid<U> const &kernel) const {
+Grid<T> convolve(Grid<U> const &kernel) const {
 	size_t const kh = kernel.height();
 	size_t const kw = kernel.width();
 
@@ -145,8 +177,8 @@ grid<T> convolve(grid<U> const &kernel) const {
 		throw std::out_of_range("Grid to convolve must have odd size.");
 	}
 	
-	grid<T> const padded = this->pad_vh(kh / 2, kw / 2);
-	grid<T> out(m_height, m_width);
+	Grid<T> const padded = this->pad_vh(kh / 2, kw / 2);
+	Grid<T> out(m_height, m_width);
 
 
 	for (size_t start_y = 0; start_y < m_height; start_y++) {
@@ -167,7 +199,7 @@ grid<T> convolve(grid<U> const &kernel) const {
 }
 
 template <typename U>
-grid<T> convolve(grid<U> const &kernel, grid<float> const &mask) const {
+Grid<T> convolve(Grid<U> const &kernel, Grid<float> const &mask) const {
 	size_t const kh = kernel.height();
 	size_t const kw = kernel.width();
 
@@ -177,8 +209,8 @@ grid<T> convolve(grid<U> const &kernel, grid<float> const &mask) const {
 		throw std::out_of_range("Maks must be the same size as the grid to convolve.");
 	}
 	
-	grid<T> const padded = this->pad_vh(kh / 2, kw / 2);
-	grid<T> out(m_height, m_width);
+	Grid<T> const padded = this->pad_vh(kh / 2, kw / 2);
+	Grid<T> out(m_height, m_width);
 
 	for (size_t start_y = 0; start_y < m_height; start_y++) {
 		for (size_t start_x = 0; start_x < m_width; start_x++) {
@@ -198,7 +230,7 @@ grid<T> convolve(grid<U> const &kernel, grid<float> const &mask) const {
 }
 
 template <typename U>
-grid<T> convolve(std::vector<U> const &kernel) const {
+Grid<T> convolve(std::vector<U> const &kernel) const {
 	size_t const ks = kernel.size();
 	size_t const pad = ks / 2;
 
@@ -208,24 +240,24 @@ grid<T> convolve(std::vector<U> const &kernel) const {
 
 	using C = std::common_type_t<T, U>;
 
-	grid<T> const padded = this->pad(pad);
-	grid<C> temp(m_height + 2 * pad, m_width + 2 * pad, U{});
-	grid<T> out(m_height, m_width, T{});
+	Grid<T> const padded = this->pad(pad);
+	Grid<C> temp(m_height + 2 * pad, m_width + 2 * pad, U{});
+	Grid<T> out(m_height, m_width, T{});
 
 	const U* __restrict kd = kernel.data();
 	const T* __restrict pd = padded.raw();
 	C* __restrict td = temp.raw();
 	T* __restrict od = out.raw();
 
-	size_t pw = padded.width();
-	size_t tw = temp.width();
+	size_t const pw = padded.width();
+	size_t const tw = temp.width();
 
 	//horizontal pass
 	for (size_t y = 0; y < m_height; y++) {
-		size_t start_y = y + pad;
+		size_t const start_y = y + pad;
 
 		for (size_t x = 0; x < m_width; x++) {
-			size_t start_x = x + pad;
+			size_t const start_x = x + pad;
 			C sum = 0;
 					
 			for (size_t i = 0; i < ks; i++) {
@@ -239,7 +271,7 @@ grid<T> convolve(std::vector<U> const &kernel) const {
 	//vertical pass
 	for (size_t y = 0; y < m_height; y++) {
 		for (size_t x = 0; x < m_width; x++) {
-			size_t start_x = x + pad;
+			size_t const start_x = x + pad;
 			C sum = 0;
 
 			for (size_t i = 0; i < ks; i++) {
@@ -254,7 +286,7 @@ grid<T> convolve(std::vector<U> const &kernel) const {
 }
 
 template <typename U>
-grid<T> convolve(std::vector<U> const &kernel, grid<float> const &mask) const {
+Grid<T> convolve(std::vector<U> const &kernel, Grid<float> const &mask) const {
 	size_t const ks = kernel.size();
 	size_t const pad = ks / 2;
 
@@ -266,9 +298,9 @@ grid<T> convolve(std::vector<U> const &kernel, grid<float> const &mask) const {
 
 	using C = std::common_type_t<T, U, float>;
 
-	grid<T> const padded = this->pad(pad);
-	grid<C> temp(m_height + 2 * pad, m_width + 2 * pad, U{});
-	grid<T> out(m_height, m_width, T{});
+	Grid<T> const padded = this->pad(pad);
+	Grid<C> temp(m_height + 2 * pad, m_width + 2 * pad, U{});
+	Grid<T> out(m_height, m_width, T{});
 
 	const U* __restrict kd = kernel.data();
 	const T* __restrict pd = padded.raw();
@@ -277,15 +309,15 @@ grid<T> convolve(std::vector<U> const &kernel, grid<float> const &mask) const {
 	C* __restrict td = temp.raw();
 	T* __restrict od = out.raw();
 
-	size_t pw = padded.width();
-	size_t tw = temp.width();
+	size_t const pw = padded.width();
+	size_t const tw = temp.width();
 
 	//horizontal pass
 	for (size_t y = 0; y < m_height; y++) {
-		size_t start_y = y + pad;
+		size_t const start_y = y + pad;
 
 		for (size_t x = 0; x < m_width; x++) {
-			size_t start_x = x + pad;
+			size_t const start_x = x + pad;
 			C sum = 0;
 					
 			for (size_t i = 0; i < ks; i++) {
@@ -299,7 +331,7 @@ grid<T> convolve(std::vector<U> const &kernel, grid<float> const &mask) const {
 	//vertical pass
 	for (size_t y = 0; y < m_height; y++) {
 		for (size_t x = 0; x < m_width; x++) {
-			size_t start_x = x + pad;
+			size_t const start_x = x + pad;
 			C sum = 0;
 
 			for (size_t i = 0; i < ks; i++) {
@@ -314,7 +346,7 @@ grid<T> convolve(std::vector<U> const &kernel, grid<float> const &mask) const {
 }
 
 template <typename U>
-grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h) const {
+Grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h) const {
 	size_t const kvs = kernel_v.size();
 	size_t const pad_v = kvs / 2;
 	size_t const khs = kernel_h.size();
@@ -326,9 +358,9 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h)
 
 	using C = std::common_type_t<T, U>;
 
-	grid<T> const padded = this->pad_vh(pad_v, pad_h);
-	grid<C> temp(m_height + 2 * pad_v, m_width + 2 * pad_h, U{});
-	grid<T> out(m_height, m_width, T{});
+	Grid<T> const padded = this->pad_vh(pad_v, pad_h);
+	Grid<C> temp(m_height + 2 * pad_v, m_width + 2 * pad_h, U{});
+	Grid<T> out(m_height, m_width, T{});
 
 	const U* __restrict kvd = kernel_v.data();
 	const U* __restrict khd = kernel_h.data();
@@ -336,15 +368,15 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h)
 	C* __restrict td = temp.raw();
 	T* __restrict od = out.raw();
 
-	size_t pw = padded.width();
-	size_t tw = temp.width();
+	size_t const pw = padded.width();
+	size_t const tw = temp.width();
 
 	//horizontal pass
 	for (size_t y = 0; y < m_height; y++) {
-		size_t start_y = y + pad_v;
+		size_t const start_y = y + pad_v;
 
 		for (size_t x = 0; x < m_width; x++) {
-			size_t start_x = x + pad_h;
+			size_t const start_x = x + pad_h;
 			C sum = 0;
 					
 			for (size_t i = 0; i < khs; i++) {
@@ -358,7 +390,7 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h)
 	//vertical pass
 	for (size_t y = 0; y < m_height; y++) {
 		for (size_t x = 0; x < m_width; x++) {
-			size_t start_x = x + pad_h;
+			size_t const start_x = x + pad_h;
 			C sum = 0;
 
 			for (size_t i = 0; i < kvs; i++) {
@@ -373,7 +405,7 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h)
 }
 
 template <typename U>
-grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h, grid<float> const &mask) const {
+Grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h, Grid<float> const &mask) const {
 	size_t const kvs = kernel_v.size();
 	size_t const pad_v = kvs / 2;
 	size_t const khs = kernel_h.size();
@@ -387,9 +419,9 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h,
 
 	using C = std::common_type_t<T, U>;
 
-	grid<T> const padded = this->pad_vh(pad_v, pad_h);
-	grid<C> temp(m_height + 2 * pad_v, m_width + 2 * pad_h, U{});
-	grid<T> out(m_height, m_width, T{});
+	Grid<T> const padded = this->pad_vh(pad_v, pad_h);
+	Grid<C> temp(m_height + 2 * pad_v, m_width + 2 * pad_h, U{});
+	Grid<T> out(m_height, m_width, T{});
 
 	const U* __restrict kvd = kernel_v.data();
 	const U* __restrict khd = kernel_h.data();
@@ -399,15 +431,15 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h,
 	C* __restrict td = temp.raw();
 	T* __restrict od = out.raw();
 
-	size_t pw = padded.width();
-	size_t tw = temp.width();
+	size_t const pw = padded.width();
+	size_t const tw = temp.width();
 
 	//horizontal pass
 	for (size_t y = 0; y < m_height; y++) {
-		size_t start_y = y + pad_v;
+		size_t const start_y = y + pad_v;
 
 		for (size_t x = 0; x < m_width; x++) {
-			size_t start_x = x + pad_h;
+			size_t const start_x = x + pad_h;
 			C sum = 0;
 					
 			for (size_t i = 0; i < khs; i++) {
@@ -421,7 +453,7 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h,
 	//vertical pass
 	for (size_t y = 0; y < m_height; y++) {
 		for (size_t x = 0; x < m_width; x++) {
-			size_t start_x = x + pad_h;
+			size_t const start_x = x + pad_h;
 			C sum = 0;
 
 			for (size_t i = 0; i < kvs; i++) {
@@ -435,12 +467,14 @@ grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h,
 	return out;
 }
 
+
+
 // SHAPING
-void resize (size_t height, size_t width, T const &value = T{}) {
+Grid<T>& resize (size_t const height, size_t const width, T const &value = T{}) {
 	std::vector<T> new_data(height * width, value);
 	// invariants
-	size_t min_height = std::min(height, m_height);
-	size_t min_width = std::min(width, m_width);
+	size_t const min_height = std::min(height, m_height);
+	size_t const min_width = std::min(width, m_width);
 	T* __restrict raw = m_data.data();
 	T* __restrict new_raw = new_data.data();
 	
@@ -455,16 +489,18 @@ void resize (size_t height, size_t width, T const &value = T{}) {
 	m_data.swap(new_data);
 	m_height = height;
 	m_width = width;
+
+	return *this;
 }
 
-void transpose() {
+Grid<T>& transpose() {
 	std::vector<T> new_data(m_height * m_width);
 
 	T* __restrict raw = m_data.data();
 	T* __restrict new_raw = new_data.data();
 
 	for (size_t i = 0; i < m_height; i++) {
-		size_t start_i = i * m_width;
+		size_t const start_i = i * m_width;
 		for (size_t j = 0; j < m_width; j++) {
 			new_raw[j * m_height + i] = raw[start_i + j];
 		}
@@ -472,17 +508,19 @@ void transpose() {
 
 	m_data.swap(new_data);
 	std::swap(m_height, m_width);
+
+	return *this;
 }
 
-inline void append_rows (size_t amount, T const &value = T{}) {
-	resize(m_height + amount, m_width, value);
+inline Grid<T>& append_rows (size_t const amount, T const &value = T{}) {
+	return resize(m_height + amount, m_width, value);
 }
 
-inline void append_columns (size_t amount, T const &value = T{}) {
-	resize(m_height, m_width + amount, value);
+inline Grid<T>& append_columns (size_t const amount, T const &value = T{}) {
+	return resize(m_height, m_width + amount, value);
 }
 
-void insert_rows (size_t position, size_t amount, T const &value = T{}) {
+Grid<T>& insert_rows (size_t position, size_t const amount, T const &value = T{}) {
 	position = std::min(position, m_width);
 
 	m_data.insert(
@@ -492,11 +530,12 @@ void insert_rows (size_t position, size_t amount, T const &value = T{}) {
 	);
 
 	m_height += amount;
+	return *this;
 }
 
-void insert_columns (size_t position, size_t amount, T const &value = T{}) {
+Grid<T>& insert_columns (size_t position, size_t amount, T const &value = T{}) {
 	position = std::min(position, m_width);
-	size_t new_width = m_width + amount;
+	size_t const new_width = m_width + amount;
 
 	std::vector<T> new_data(m_height * new_width);
 
@@ -525,19 +564,21 @@ void insert_columns (size_t position, size_t amount, T const &value = T{}) {
 
 	m_width = new_width;
 	m_data.swap(new_data);
+
+	return *this;
 }
 
 
-grid<T> slice (
-	size_t start_y,
-	size_t start_x,
-	size_t size_y,
-	size_t size_x
+Grid<T> slice (
+	size_t const start_y,
+	size_t const start_x,
+	size_t const size_y,
+	size_t const size_x
 ) const {
 	if (start_y + size_y > m_height || start_x + size_x > m_width)
 		throw std::out_of_range("Slice exceeds grid bounds.");
 		
-	grid<T> out(size_y, size_x);
+	Grid<T> out(size_y, size_x);
 
 	for (size_t i = 0; i < size_y; i++){
 		std::copy_n(
@@ -551,7 +592,7 @@ grid<T> slice (
 }
 
 bool empty() {
-	return (m_data.size() == 0);
+	return m_data.empty();
 }
 
 void print() {
@@ -565,14 +606,14 @@ void print() {
 }
 
 // UNARY OPERATORS
-grid<T>& operator++ () {
+Grid<T>& operator++ () {
 	this->mutate([](T &x){
 		return x++;
 	});
 	return *this;
 }
 
-grid<T>& operator-- () {
+Grid<T>& operator-- () {
 	this->mutate([](T &x){
 		return x--;
 	});
@@ -581,7 +622,7 @@ grid<T>& operator-- () {
 
 // SCALAR OPERATORS
 template <typename U>
-grid<T> operator+ (U const &scalar) const {
+Grid<T> operator+ (U const &scalar) const {
 	return this->transformed([](T const &x, U const &s){
 		return x + s;
 	}, scalar);
@@ -589,7 +630,7 @@ grid<T> operator+ (U const &scalar) const {
 
 
 template <typename U>
-grid<T>& operator+= (U const &scalar) {
+Grid<T>& operator+= (U const &scalar) {
 	this->mutate([](T &x, U const &s){
 		return x += s;
 	}, scalar);
@@ -597,7 +638,7 @@ grid<T>& operator+= (U const &scalar) {
 }
 
 template <typename U>
-grid<T> operator- (U const &scalar) const {
+Grid<T> operator- (U const &scalar) const {
 	return this->transformed([](T const &x, U const &s){
 		return x - s;
 	}, scalar);
@@ -605,7 +646,7 @@ grid<T> operator- (U const &scalar) const {
 
 
 template <typename U>
-grid<T>& operator-= (U const &scalar) {
+Grid<T>& operator-= (U const &scalar) {
 	this->mutate([](T &x, U const &s){
 		return x -= s;
 	}, scalar);
@@ -613,14 +654,14 @@ grid<T>& operator-= (U const &scalar) {
 }
 
 template <typename U>
-grid<T> operator* (U const &scalar) const {
+Grid<T> operator* (U const &scalar) const {
 	return this->transformed([](T const &x, U const &s){
 		return x * s;
 	}, scalar);
 }
 
 template <typename U>
-grid<T>& operator*= (U const &scalar) {
+Grid<T>& operator*= (U const &scalar) {
 	this->mutate([](T &x, U const &s){
 		return x *= s;
 	}, scalar);
@@ -628,14 +669,14 @@ grid<T>& operator*= (U const &scalar) {
 }
 
 template <typename U>
-grid<T> operator/ (U const &scalar) const {
+Grid<T> operator/ (U const &scalar) const {
 	return this->transformed([](T const &x, U const &s){
 		return x / s;
 	}, scalar);
 }
 
 template <typename U>
-grid<T>& operator/= (U const &scalar) {
+Grid<T>& operator/= (U const &scalar) {
 	this->mutate([](T &x, U const &s){
 		return x /= s;
 	}, scalar);
@@ -644,12 +685,12 @@ grid<T>& operator/= (U const &scalar) {
 
 // GRID OPERATORS
 template <typename U>
-grid<T> operator+ (grid<U> const &input) const {
+Grid<T> operator+ (Grid<U> const &input) const {
 	if (this->height() != input.height() || this->width() != input.width()){
 		throw std::out_of_range("Grids to sum have different dimensions.");
 	}
 
-	grid<T> out(this->height(), this->width());
+	Grid<T> out(this->height(), this->width());
 	// invariants
 	size_t size = this->size();
 	T* __restrict out_data = out.raw();
@@ -664,12 +705,12 @@ grid<T> operator+ (grid<U> const &input) const {
 }
 
 template <typename U>
-grid<T>& operator+= (grid<U> const &input) {
+Grid<T>& operator+= (Grid<U> const &input) {
 	if (this->height() != input.height() || this->width() != input.width()){
 		throw std::out_of_range("Grids to multiply have different dimensions.");
 	}
 	
-	size_t size = this->size();
+	size_t const size = this->size();
 	T* __restrict data = this->raw();
 	U* __restrict input_data = input.raw();
 	
@@ -680,14 +721,14 @@ grid<T>& operator+= (grid<U> const &input) {
 }
 
 template <typename U>
-grid<T> operator- (grid<U> const &input) const {
+Grid<T> operator- (Grid<U> const &input) const {
 	if (this->height() != input.height() || this->width() != input.width()){
 		throw std::out_of_range("Grids to sum have different dimensions.");
 	}
 
-	grid<T> out(this->height(), this->width());
+	Grid<T> out(this->height(), this->width());
 	// invariants
-	size_t size = this->size();
+	size_t const size = this->size();
 	T* __restrict out_data = out.raw();
 	const T* __restrict this_data = this->raw();
 	const U* __restrict input_data = input.raw();
@@ -700,12 +741,12 @@ grid<T> operator- (grid<U> const &input) const {
 }
 
 template <typename U>
-grid<T>& operator-= (grid<U> const &input) {
+Grid<T>& operator-= (Grid<U> const &input) {
 	if (this->height() != input.height() || this->width() != input.width()){
 		throw std::out_of_range("Grids to multiply have different dimensions.");
 	}
 	
-	size_t size = this->size();
+	size_t const size = this->size();
 	T* __restrict data = this->raw();
 	U* __restrict input_data = input.raw();
 	
@@ -716,14 +757,14 @@ grid<T>& operator-= (grid<U> const &input) {
 }
 
 template <typename U>
-grid<T> operator* (grid<U> const &input) const {
+Grid<T> operator* (Grid<U> const &input) const {
 	if (this->height() != input.height() || this->width() != input.width()){
 		throw std::out_of_range("Grids to multiply have different dimensions.");
 	}
 
-	grid<T> out(this->height(), this->width());
+	Grid<T> out(this->height(), this->width());
 	// invariants
-	size_t size = this->size();
+	size_t const size = this->size();
 	T* __restrict out_data = out.raw();
 	const T* __restrict this_data = this->raw();
 	const U* __restrict input_data = input.raw();
@@ -736,12 +777,12 @@ grid<T> operator* (grid<U> const &input) const {
 }
 
 template <typename U>
-grid<T>& operator*= (grid<U> const &input) {
+Grid<T>& operator*= (Grid<U> const &input) {
 	if (this->height() != input.height() || this->width() != input.width()){
 		throw std::out_of_range("Grids to multiply have different dimensions.");
 	}
 	
-	size_t size = this->size();
+	size_t const size = this->size();
 	T* __restrict data = this->raw();
 	U* __restrict input_data = input.raw();
 	
@@ -752,14 +793,14 @@ grid<T>& operator*= (grid<U> const &input) {
 }
 
 template <typename U>
-grid<T> operator/ (grid<U> const &input) const {
+Grid<T> operator/ (Grid<U> const &input) const {
 	if (this->height() != input.height() || this->width() != input.width()){
 		throw std::out_of_range("Grids to multiply have different dimensions.");
 	}
 
-	grid<T> out(this->height(), this->width());
+	Grid<T> out(this->height(), this->width());
 	// invariants
-	size_t size = this->size();
+	size_t const size = this->size();
 	T* __restrict out_data = out.raw();
 	const T* __restrict this_data = this->raw();
 	const U* __restrict input_data = input.raw();
@@ -772,12 +813,12 @@ grid<T> operator/ (grid<U> const &input) const {
 }
 
 template <typename U>
-grid<T>& operator/= (grid<U> const &input) {
+Grid<T>& operator/= (Grid<U> const &input) {
 	if (this->height() != input.height() || this->width() != input.width()){
 		throw std::out_of_range("Grids to multiply have different dimensions.");
 	}
 	
-	size_t size = this->size();
+	size_t const size = this->size();
 	T* __restrict data = this->raw();
 	U* __restrict input_data = input.raw();
 	
@@ -792,14 +833,14 @@ grid<T>& operator/= (grid<U> const &input) {
 
 // NON-MEMBER BINARY OPERATORS
 template <typename T, typename U>
-grid<T> operator- (U const &scalar, grid<T> const &mat) {
+Grid<T> operator- (U const &scalar, Grid<T> const &mat) {
 	return mat.transformed([](T const &x, U const &s){
 		return s - x;
 	}, scalar);
 }
 
 template <typename T, typename U>
-grid<T> operator/ (U const &scalar, grid<T> const &mat) {
+Grid<T> operator/ (U const &scalar, Grid<T> const &mat) {
 	return mat.transformed([](T const &x, U const &s){
 		return s / x;
 	}, scalar);

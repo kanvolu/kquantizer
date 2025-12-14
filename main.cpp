@@ -36,6 +36,7 @@ extern "C" {
 #include <cmath>
 #include <algorithm>
 #include <string>
+#include <filesystem>
 #include <sys/ioctl.h>
 
 #include "stb_image.h"
@@ -50,16 +51,15 @@ extern "C" {
 
 using namespace std;
 
-// TODO move to std::filesystem instead of using raw strings
 
-string out_name(string const path, string const append){
-	size_t pos = path.rfind(".");
-	return path.substr(0, pos) + "_" + append + path.substr(pos);
+filesystem::path out_name(filesystem::path path, string const &append){
+	filesystem::path filename = path.stem();
+	return path.replace_filename(path.stem().string() + "_" + append + path.extension().string());
 }
 
 void print_image(int const height, int const width, int const channels, unsigned char const * data) {
 	//encoding in base64
-	char const b64_table[65] =
+	char constexpr b64_table[65] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz"
         "0123456789+/";
@@ -75,9 +75,9 @@ void print_image(int const height, int const width, int const channels, unsigned
 		encoded.push_back(
 			b64_table[data[i] >> 2]);
 		encoded.push_back(
-			b64_table[((data[i] & 0x03) << 4) | (data[i+1] >> 4)]);
+			b64_table[(data[i] & 0x03) << 4 | data[i+1] >> 4]);
 		encoded.push_back(
-			b64_table[((data[i+1] & 0x0F) << 2) | (data[i+2] >> 6)]);
+			b64_table[(data[i+1] & 0x0F) << 2 | data[i+2] >> 6]);
 		encoded.push_back(
 			b64_table[data[i+2] & 0x3F]);
 	}
@@ -86,7 +86,7 @@ void print_image(int const height, int const width, int const channels, unsigned
 		encoded.push_back(
 			b64_table[data[i] >> 2]);
 		encoded.push_back(
-			b64_table[((data[i] & 0x03) << 4) | (data[i+1] >> 4)]);
+			b64_table[(data[i] & 0x03) << 4 | data[i+1] >> 4]);
 		encoded.push_back(
 			b64_table[(data[i+1] & 0x0F) << 2]);
 		encoded.push_back('=');
@@ -101,15 +101,15 @@ void print_image(int const height, int const width, int const channels, unsigned
 
 	// getting window dimensions
 
-	winsize w;
+	winsize window;
 
-	if (ioctl(0, TIOCGWINSZ, &w) == -1) {
+	if (ioctl(0, TIOCGWINSZ, &window) == -1) {
         perror("Could not retrieve terminal dimensions to print image");
         return;
     }
 
-    size_t p_height = w.ws_row;
-    size_t p_width = w.ws_col;
+    size_t p_height = window.ws_row;
+    size_t p_width = window.ws_col;
 
     if (height < width) {
     	p_height = height * p_width / (2 * width);  // it must be multiplied by two since rows are double the height of columns
@@ -117,17 +117,16 @@ void print_image(int const height, int const width, int const channels, unsigned
     	p_width = 2 * width * p_height / height;
     }
 
-	// transmiting one chunk at a time
-			
-	size_t const chunk_size = 4000;
+	// transmitting one chunk at a time
 	size_t const total = encoded.size();
 	size_t offset = 0;
 
 	while (offset < total) {
-		size_t count = min(chunk_size, total - offset);
+		size_t constexpr chunk_size = 4000;
+		size_t const count = min(chunk_size, total - offset);
 		string chunk = encoded.substr(offset, count);
 
-		cout << "\033_Gq=1,a=T,i=1,m=" << ((count == chunk_size) ? 1 : 0)
+		cout << "\033_Gq=1,a=T,i=1,m=" << (count == chunk_size ? 1 : 0)
 			<< ",f=" << channels * 8
 			<< ",s=" << width
 			<< ",v=" << height
@@ -144,10 +143,9 @@ void print_image(int const height, int const width, int const channels, unsigned
 
 }
 
-bool is_extension_supported(string const path) {
-	string extension = path.substr(path.rfind("."));
-	return (
-		extension == ".png" ||
+bool is_extension_supported(filesystem::path const &path) {
+	filesystem::path const extension = path.extension();
+	return extension == ".png" ||
 		extension == ".bmp" ||
 		extension == ".dib" ||
 		extension == ".tga" ||
@@ -158,25 +156,24 @@ bool is_extension_supported(string const path) {
 		extension == ".jpe" ||
 		extension == ".jif" ||
 		extension == ".jfif" ||
-		extension == ".jfi"
-	);
+		extension == ".jfi";
 }
 
 
 // QUANTIZATION LOGIC
 
-vector<vector<int>> retrieve_selected_colors(vector<vector<int>> &list, size_t const amount, bool by_brightness = false){
+vector<vector<int>> retrieve_selected_colors(vector<vector<int>> &list, size_t const amount, bool const by_brightness = false){
 
 	vector<vector<int>> out;
-	size_t size = list.size();
+	size_t const size = list.size();
 	
 	if (by_brightness){
 		vector<int> brightness_list;
 		vector<size_t> brightness_positions;
 		sort_color_list(list, &brightness_list); // it has to be sorted because we want to capture the minimum element, if we do not sort it we will always capture the first pixel instead, and it might not be the minimum
 		for (size_t i = 0; i < amount - 1; i++){
-			for (size_t j = (i * size / (amount - 1)); j < size; j++){
-				if (brightness_list[j] >= int(i) * 255 / int(amount)){
+			for (size_t j = i * size / (amount - 1); j < size; j++){
+				if (brightness_list[j] >= static_cast<int>(i) * 255 / static_cast<int>(amount)){
 					brightness_positions.push_back(j);
 					break;
 				} 
@@ -202,18 +199,17 @@ vector<vector<int>> retrieve_selected_colors(vector<vector<int>> &list, size_t c
 }
 
 
-bool quantize_2d_vector_to_list(grid<int> const &mat, 
+bool quantize_2d_vector_to_list(Grid<int> const &mat,
 	vector<vector<int>> const &list, 
-	grid<int> * red, 
-	grid<int> * green, 
-	grid<int> * blue
+	Grid<int> * red,
+	Grid<int> * green,
+	Grid<int> * blue
 ){
-    size_t color_pos;
-    size_t size = list.size();
+    size_t const size = list.size();
 
     for (size_t i = 0; i < red->height(); i++){
     	for (size_t j = 0; j < red->width(); j++){
-    		color_pos = (static_cast<float>(mat[i][j]) / 255.0f) * static_cast<float>(size - 1) + 0.5f;
+    		size_t const color_pos = static_cast<float>(mat[i][j]) / 255.0f * static_cast<float>(size - 1) + 0.5f;
     		(*red)[i][j] = list[color_pos][0];
     		(*green)[i][j] = list[color_pos][1];
     		(*blue)[i][j] = list[color_pos][2];
@@ -224,13 +220,12 @@ bool quantize_2d_vector_to_list(grid<int> const &mat,
 }
 
 
-grid<int> quantize_2d_vector_to_self(grid<int> mat, size_t resolution){
-    float cache;
+Grid<int> quantize_2d_vector_to_self(Grid<int> mat, size_t const resolution){
 
     for (size_t i = 0; i < mat.height(); i++){
     	for (size_t j = 0; j < mat.width(); j++){
-    		cache = floor((static_cast<float>(mat[i][j]) / 255.0f) * static_cast<float>(resolution - 1) + 0.5f);
-            mat[i][j] = (cache * 255.0f) / static_cast<float>(resolution - 1);
+    		float const cache = floor(static_cast<float>(mat[i][j]) / 255.0f * static_cast<float>(resolution - 1) + 0.5f);
+            mat[i][j] = cache * 255.0f / static_cast<float>(resolution - 1);
 		}
     }	
     
@@ -253,7 +248,8 @@ int main(int argc, char* argv[]){
 		return 1;
 	}
 
-	if (!is_extension_supported(string(args.input_file))) {
+	filesystem::path const input_file = args.input_file;
+	if (!is_extension_supported(input_file)) {
 		cout << "Image format not supported" << endl;
 		return 1;
 	}
@@ -261,9 +257,9 @@ int main(int argc, char* argv[]){
 	// IMPORT
 	
 	int width, height, channels;
- 	string output_file;
+ 	filesystem::path output_file;
 
-	unsigned char const * data = stbi_load(args.input_file, &width, &height, &channels, 0);
+	unsigned char const * data = stbi_load(filesystem::path(args.input_file).c_str(), &width, &height, &channels, 0);
 	
 	if (!data) {
 	    cerr << "Failed to load image: " << stbi_failure_reason() << endl;
@@ -271,8 +267,7 @@ int main(int argc, char* argv[]){
 	}
 	
 
-	grid<int> red, green, blue, alpha, grey;
-	grid<float> edges;
+	Grid<int> red, green, blue, alpha, grey;
 	vector<vector<int>> palette;
 
 	// PREPROCESSING
@@ -288,8 +283,8 @@ int main(int argc, char* argv[]){
 	
 	if (args.blur > 0){
 		grey = rgb_to_greyscale(red, green, blue);
-		edges = 1 - detect_edges_sobel(grey);
-		grid<float> kernel = g_kernel(2 * args.blur + 1, static_cast<float>(args.blur) / 1.5f);
+		Grid<float> edges = 1 - detect_edges_sobel(grey);
+		Grid<float> kernel = g_kernel(2 * args.blur + 1, static_cast<float>(args.blur) / 1.5f);
 		
 		red = red.convolve(kernel, edges);
 		green = green.convolve(kernel, edges);
@@ -323,7 +318,7 @@ int main(int argc, char* argv[]){
 			b_raw[i] = cache[2];
 		}
 		
-		output_file = out_name(string(args.input_file), "search_" + string(args.palette));
+		output_file = out_name(input_file, "search_" + string(args.palette));
 
 		
 	} else if (string(args.mode) == "equidistant"){
@@ -335,7 +330,7 @@ int main(int argc, char* argv[]){
 		sort_color_list(palette);
 		quantize_2d_vector_to_list(grey, palette, &red, &green, &blue);
 		
-		output_file = out_name(string(args.input_file), "equidistant_" + string(args.palette));
+		output_file = out_name(input_file, "equidistant_" + string(args.palette));
 
 		
 	} else if (string(args.mode) == "self"){
@@ -346,7 +341,7 @@ int main(int argc, char* argv[]){
 		green = quantize_2d_vector_to_self(green, args.resolution);
 		blue = quantize_2d_vector_to_self(blue, args.resolution);
 
-		output_file = out_name(string(args.input_file), "self");
+		output_file = out_name(input_file, "self");
 
 		
 	} else if (string(args.mode) == "self-sort"){
@@ -357,7 +352,7 @@ int main(int argc, char* argv[]){
 		grey = rgb_to_greyscale(red, green, blue);
 		quantize_2d_vector_to_list(grey, color_list, &red, &green, &blue);
 		
-		output_file = out_name(string(args.input_file), "self_sort");
+		output_file = out_name(input_file, "self_sort");
 
 		
 	} else if (string(args.mode) == "bw") {
@@ -369,7 +364,7 @@ int main(int argc, char* argv[]){
 		green = grey;
 		blue = grey;
 
-		output_file = out_name(string(args.input_file), "bw");
+		output_file = out_name(input_file, "bw");
 
 		
 // 	} else if (string(args.mode) == "blur"){
@@ -379,7 +374,7 @@ int main(int argc, char* argv[]){
 // 		green = green.convolve(kernel);
 // 		blue = blue.convolve(kernel);
 // 
-// 		output_file = out_name(string(args.input_file), "blur");
+// 		output_file = out_name(input_file, "blur");
 // 	} else if (string(args.mode) == "edges") {
 // 		grey = rgb_to_greyscale(red, green, blue);
 // 		edges = detect_edges_sobel(grey);
@@ -389,10 +384,9 @@ int main(int argc, char* argv[]){
 // 		green = edges;
 // 		blue = edges;
 // 
-// 		output_file = out_name(string(args.input_file), "edges");
+// 		output_file = out_name(input_file, "edges");
 		
 	} else {
-	
 		print_help(argv[0]);
         return 1;
 	}
@@ -402,31 +396,19 @@ int main(int argc, char* argv[]){
 	// POSTPROCESSING
 
 	if (args.antialiasing > 0){ // TODO make actual antialiasing
-	
 		grey = rgb_to_greyscale(red, green, blue);
-		edges = detect_edges_sobel(grey);
-		
-		grid<float> kernel = g_kernel(2 * args.antialiasing + 1, float(args.antialiasing) / 1.5f);
-		
-		red = red.convolve(kernel, edges);
-		green = green.convolve(kernel, edges);
-		blue = blue.convolve(kernel, edges);
-
-		if (!alpha.empty()){
-			alpha = alpha.convolve(kernel, edges);
-		}
+		Grid<float> edges_h = detect_edges_horizontal(grey);
+		Grid<float> edges_v = detect_edges_vertical(grey);
 	}
 
 	
-	if (!(string(args.output_file).empty())){
-		output_file = string(args.output_file);
+	if (args.output_file[0] != '\0'){
+		output_file = filesystem::path(args.output_file);
 	}
-
-	string extension = output_file.substr(output_file.rfind('.'));
 
 	// EXPORTING
 
-	unsigned char * output;
+	vector<unsigned char> output;
 
 	if (channels == 4) {
 		output = flatten(&red, &green, &blue, &alpha);
@@ -434,42 +416,37 @@ int main(int argc, char* argv[]){
 		output = flatten(&red, &green, &blue);
 	}
 
-	if (args.print) print_image(height, width, channels, output);
+	if (args.print) print_image(height, width, channels, output.data());
 
 	if (!args.print || !string(args.output_file).empty()) {
 
 		int error;
-		
-		if (extension == ".png") {
-			error = stbi_write_png(output_file.c_str(), width, height, channels, output, 0);
+
+		// TODO maybe use enums for mode selection and export selection
+
+		if (filesystem::path extension = output_file.extension(); extension == ".png") {
+			error = stbi_write_png(output_file.c_str(), width, height, channels, output.data(), 0);
 		} else if (extension == ".bmp" || extension == ".dib") {
-			error = stbi_write_bmp(output_file.c_str(), width, height, channels, output);
+			error = stbi_write_bmp(output_file.c_str(), width, height, channels, output.data());
 		} else if (extension == ".tga" || extension == ".icb" || extension == ".vda") {
-			error = stbi_write_tga(output_file.c_str(), width, height, channels, output);
+			error = stbi_write_tga(output_file.c_str(), width, height, channels, output.data());
 		} else if (extension == ".jpg" || extension == ".jpeg" || extension == ".jpe" || extension == ".jif" || extension == ".jfif" || extension == ".jfi") {
-			error = stbi_write_jpg(output_file.c_str(), width, height, channels, output, args.quality);
+			error = stbi_write_jpg(output_file.c_str(), width, height, channels, output.data(), static_cast<int>(args.quality));
 		} else if (extension == ".hdr") {
 			// TODO Make exporting to hdr work
-			cout << "Exporting to hdr does not work yet" << endl;
-			error = 0;
+			cout << "Exporting to HDR does not work yet" << endl;
+			error = 1;
 		} else {
 			cout << "Format of the image to export could not be recognized\n" << "Exporting as png..." << endl;
-			error = stbi_write_png((output_file + ".png").c_str(), width, height, channels, output, 0);
+			error = stbi_write_png(output_file.replace_extension(".png").c_str(), width, height, channels, output.data(), 0);
 		}
 		
-
 		if (!error) {
 			cerr << "Could not export image." << endl;
 			return error;
 		}
 
 	}
-
-
-	delete[] output;
-	
 	    
 	return 0;
 }
-
-
