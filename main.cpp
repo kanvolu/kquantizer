@@ -25,9 +25,11 @@ extern "C" {
 #endif  
 
 #include "easyargs.h"
+#include "stb_image.h"
+#include "stb_image_write.h"
 
-#ifdef __cplusplus  
-}  
+#ifdef __cplusplus
+}
 #endif
 
 
@@ -38,13 +40,10 @@ extern "C" {
 #include <string>
 #include <filesystem>
 #include <sys/ioctl.h>
-
-#include "stb_image.h"
-#include "stb_image_write.h"
+#include <array>
 
 #include "kdtree.h"
 #include "grid.h"
-
 #include "blur.h"
 #include "reshaping.h"
 #include "palette-parsing.h"
@@ -162,9 +161,9 @@ bool is_extension_supported(filesystem::path const &path) {
 
 // QUANTIZATION LOGIC
 
-vector<vector<int>> retrieve_selected_colors(vector<vector<int>> &list, size_t const amount, bool const by_brightness = false){
+vector<array<int, 3>> retrieve_selected_colors(vector<array<int, 3>> &list, size_t const amount, bool const by_brightness = false){
 
-	vector<vector<int>> out;
+	vector<array<int, 3>> out;
 	size_t const size = list.size();
 	
 	if (by_brightness){
@@ -193,14 +192,12 @@ vector<vector<int>> retrieve_selected_colors(vector<vector<int>> &list, size_t c
 		
 	}
 
-	
-
 	return out;
 }
 
 
 bool quantize_2d_vector_to_list(Grid<int> const &mat,
-	vector<vector<int>> const &list, 
+	vector<array<int,3>> const &list,
 	Grid<int> * red,
 	Grid<int> * green,
 	Grid<int> * blue
@@ -209,7 +206,7 @@ bool quantize_2d_vector_to_list(Grid<int> const &mat,
 
     for (size_t i = 0; i < red->height(); i++){
     	for (size_t j = 0; j < red->width(); j++){
-    		size_t const color_pos = static_cast<float>(mat[i][j]) / 255.0f * static_cast<float>(size - 1) + 0.5f;
+    		size_t const color_pos = (mat[i][j] * (size - 1) + 127) / 255;
     		(*red)[i][j] = list[color_pos][0];
     		(*green)[i][j] = list[color_pos][1];
     		(*blue)[i][j] = list[color_pos][2];
@@ -267,23 +264,28 @@ int main(int argc, char* argv[]){
 	}
 	
 
-	Grid<int> red, green, blue, alpha, grey;
-	vector<vector<int>> palette;
+	Grid<int> red, green, blue, alpha;
+	vector<array<int, 3>> palette;
 
 	// PREPROCESSING
 
 	if (channels == 3){
-		vectorize_to_rgb(data, height, width, &red, &green, &blue);
+		if (!vectorize_to_rgb(data, height, width, &red, &green, &blue)) {
+			cout << "Could not process image" << endl;
+			return 1;
+		}
 	} else if (channels == 4){
-		vectorize_to_rgb(data, height, width, &red, &green, &blue, &alpha);
+		if (!vectorize_to_rgb(data, height, width, &red, &green, &blue, &alpha)) {
+			cout << "Could not process image" << endl;
+			return 1;
+		}
 	} else {
 		cerr << "Image is neither RGB nor RGBA" << endl;
 		return 1;
 	}
 	
 	if (args.blur > 0){
-		grey = rgb_to_greyscale(red, green, blue);
-		Grid<float> edges = 1 - detect_edges_sobel(grey);
+		Grid<float> edges = 1 - detect_edges_sobel(rgb_to_greyscale(red, green, blue));
 		Grid<float> kernel = g_kernel(2 * args.blur + 1, static_cast<float>(args.blur) / 1.5f);
 		
 		red = red.convolve(kernel, edges);
@@ -302,16 +304,15 @@ int main(int argc, char* argv[]){
 	
 		palette = import_palette(args.palette);
 		if (palette.empty()) return 1;
-		kdtree<int> palette_tree(palette);
+		KDTree<int, 3> palette_tree(palette);
 		//invariants for accessing raw data in the grids since the same process is applied to all pixels
 		size_t size = red.size();
 		int* __restrict r_raw = red.raw();
 		int* __restrict g_raw = green.raw();
 		int* __restrict b_raw = blue.raw();
-		vector<int> cache(3);
 
 		for (size_t i = 0; i < size; i++){
-			cache = palette_tree.nearest({r_raw[i], g_raw[i], b_raw[i]});
+			array<int, 3> cache = palette_tree.nearest({r_raw[i], g_raw[i], b_raw[i]});
 
 			r_raw[i] = cache[0];
 			g_raw[i] = cache[1];
@@ -323,7 +324,7 @@ int main(int argc, char* argv[]){
 		
 	} else if (string(args.mode) == "equidistant"){
 	
-		grey = rgb_to_greyscale(red, green, blue);
+		Grid<int> grey = rgb_to_greyscale(red, green, blue);
 		palette = import_palette(args.palette);
 		if (palette.empty()) return 1;
 		
@@ -346,19 +347,18 @@ int main(int argc, char* argv[]){
 		
 	} else if (string(args.mode) == "self-sort"){
 	
-		vector<vector<int>> color_list = vectorize_to_color_list(data, width * height * channels, channels);
+		vector<array<int, 3>> color_list = vectorize_to_color_list(data, width * height * channels, channels);
 		color_list = retrieve_selected_colors(color_list, args.resolution, true);
 		
-		grey = rgb_to_greyscale(red, green, blue);
+		Grid<int> grey = rgb_to_greyscale(red, green, blue);
 		quantize_2d_vector_to_list(grey, color_list, &red, &green, &blue);
 		
 		output_file = out_name(input_file, "self_sort");
 
 		
 	} else if (string(args.mode) == "bw") {
-	
-		grey = rgb_to_greyscale(red, green, blue);
-		grey = quantize_2d_vector_to_self(grey, args.resolution);
+
+		Grid<int> grey = quantize_2d_vector_to_self(rgb_to_greyscale(red, green, blue), args.resolution);
 
 		red = grey;
 		green = grey;
@@ -396,7 +396,7 @@ int main(int argc, char* argv[]){
 	// POSTPROCESSING
 
 	if (args.antialiasing > 0){ // TODO make actual antialiasing
-		grey = rgb_to_greyscale(red, green, blue);
+		Grid<int> grey = rgb_to_greyscale(red, green, blue);
 		Grid<float> edges_h = detect_edges_horizontal(grey);
 		Grid<float> edges_v = detect_edges_vertical(grey);
 	}
@@ -433,9 +433,12 @@ int main(int argc, char* argv[]){
 		} else if (extension == ".jpg" || extension == ".jpeg" || extension == ".jpe" || extension == ".jif" || extension == ".jfif" || extension == ".jfi") {
 			error = stbi_write_jpg(output_file.c_str(), width, height, channels, output.data(), static_cast<int>(args.quality));
 		} else if (extension == ".hdr") {
-			// TODO Make exporting to hdr work
+			vector<float> output_hdr;
+			for (auto const &value : output) {
+				output_hdr.emplace_back(static_cast<float>(value) / 255.0f);
+			}
+			error = stbi_write_hdr(output_file.c_str(), width, height, channels, output_hdr.data());
 			cout << "Exporting to HDR does not work yet" << endl;
-			error = 1;
 		} else {
 			cout << "Format of the image to export could not be recognized\n" << "Exporting as png..." << endl;
 			error = stbi_write_png(output_file.replace_extension(".png").c_str(), width, height, channels, output.data(), 0);

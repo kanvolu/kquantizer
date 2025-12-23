@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <array>
 #include "grid.h"
 
 bool vectorize_to_rgb(
@@ -19,7 +20,7 @@ Grid<int> rgb_to_greyscale(
 	Grid<int> const &b
 );
 
-std::vector<std::vector<int>> vectorize_to_color_list(
+std::vector<std::array<int, 3>> vectorize_to_color_list(
 	unsigned char const * data, 
 	size_t const size, 
 	size_t const channels

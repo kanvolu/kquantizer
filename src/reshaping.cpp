@@ -1,5 +1,6 @@
 #include <iostream>
 #include <vector>
+#include <array>
 
 #include "grid.h"
 #include "reshaping.h"
@@ -44,11 +45,11 @@ Grid<int> rgb_to_greyscale(
 }
 
 
-std::vector<std::vector<int>> vectorize_to_color_list(unsigned char const * data, size_t const size, size_t const channels){
-	std::vector<std::vector<int>> out(size / channels, std::vector<int>(channels));
+std::vector<std::array<int, 3>> vectorize_to_color_list(unsigned char const * data, size_t const size, size_t const channels){
+	std::vector<std::array<int, 3>> out(size / channels, std::array<int, 3>{});
 	
 	for (size_t i = 0; i < size / channels; i++){
-		for (size_t j = 0; j < channels; j++){
+		for (size_t j = 0; j < 3; j++){
 			out[i][j] = data[i * channels + j];
 		}
 	}
@@ -63,7 +64,7 @@ std::vector<unsigned char> flatten(
 	Grid<int> const * blue,
 	Grid<int> const * alpha
 ){
-    // the output array must be deleted afterwards
+    // the output array must be deleted afterward
     
     size_t channels;
     Grid<int> const * const grids[4] = {red, green, blue, alpha};
