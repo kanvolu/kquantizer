@@ -17,6 +17,7 @@
 #define BOOLEAN_ARGS \
     BOOLEAN_ARG(help, "-h", "Show help") \
     BOOLEAN_ARG(print, "--print", "Print processed image to the console without saving it unless '-o' is also passed") \
+    BOOLEAN_ARG(dry, "--dry", "Run the program without saving the processed image") \
     
 
 
@@ -417,6 +418,7 @@ int main(int argc, char* argv[]){
 	}
 
 	if (args.print) print_image(height, width, channels, output.data());
+	if (args.dry) return 0;
 
 	if (!args.print || !string(args.output_file).empty()) {
 
