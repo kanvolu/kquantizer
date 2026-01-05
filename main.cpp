@@ -57,44 +57,81 @@ filesystem::path out_name(filesystem::path path, string const &append){
 	return path.replace_filename(path.stem().string() + "_" + append + path.extension().string());
 }
 
-void print_image(int const height, int const width, int const channels, unsigned char const * data) {
+vector<unsigned char> resize_image(vector<unsigned char> const &data, size_t const old_height, size_t const old_width, size_t const new_height, size_t const new_width, size_t const channels) {
+	size_t const new_size = new_height * new_width * channels;
+	float const v_proportion = static_cast<float>(old_height) / static_cast<float>(new_height);
+	float const h_proportion = static_cast<float>(old_width) / static_cast<float>(new_width);
+	vector<unsigned char> output(new_size);
+
+	for (size_t i = 0; i < new_height; i++) {
+		size_t new_i = i * new_width;
+		size_t old_i = i * old_width * v_proportion;
+		for (size_t j = 0; j < new_width; j++) {
+			size_t old_j = j * h_proportion;
+			for (size_t c = 0; c < channels; c++) {
+				output[(new_i + j) * channels + c] = data[(old_i + old_j) * channels + c];
+			}
+		}
+	}
+
+	return output;
+}
+
+void print_image(int const height, int const width, int const channels, vector<unsigned char> const &data) {
+	//resizing in case the original image is too big
+	size_t constexpr MAX_HEIGHT = 720;
+	size_t constexpr MAX_WIDTH = 1280;
+
+	size_t new_height, new_width;
+	vector<unsigned char> new_data;
+
+	if (data.size() > MAX_HEIGHT * MAX_WIDTH * channels) {
+		float const proportion = min(static_cast<float>(MAX_HEIGHT) / static_cast<float>(height), static_cast<float>(MAX_WIDTH) / static_cast<float>(width));
+		new_height = height * proportion;
+		new_width = width * proportion;
+		new_data = resize_image(data, height, width, height * proportion, width * proportion, channels);
+	} else {
+		new_height = height;
+		new_width = width;
+		new_data = data;
+	}
+
 	//encoding in base64
 	char constexpr b64_table[65] =
         "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         "abcdefghijklmnopqrstuvwxyz"
         "0123456789+/";
-        
-	size_t const data_length = height * width * channels;
-	size_t const encoded_length = ((data_length + 2) / 3) * 4;
+
+	size_t const encoded_length = ((new_data.size() + 2) / 3) * 4;
 
 	string encoded;
 	encoded.reserve(encoded_length);
 
 	size_t i;
-	for (i = 0; i + 2  < data_length; i += 3) {
+	for (i = 0; i + 2  < new_data.size(); i += 3) {
 		encoded.push_back(
-			b64_table[data[i] >> 2]);
+			b64_table[new_data[i] >> 2]);
 		encoded.push_back(
-			b64_table[(data[i] & 0x03) << 4 | data[i+1] >> 4]);
+			b64_table[(new_data[i] & 0x03) << 4 | new_data[i+1] >> 4]);
 		encoded.push_back(
-			b64_table[(data[i+1] & 0x0F) << 2 | data[i+2] >> 6]);
+			b64_table[(new_data[i+1] & 0x0F) << 2 | new_data[i+2] >> 6]);
 		encoded.push_back(
-			b64_table[data[i+2] & 0x3F]);
+			b64_table[new_data[i+2] & 0x3F]);
 	}
 
-	if (i + 1 < data_length) {
+	if (i + 1 < new_data.size()) {
 		encoded.push_back(
-			b64_table[data[i] >> 2]);
+			b64_table[new_data[i] >> 2]);
 		encoded.push_back(
-			b64_table[(data[i] & 0x03) << 4 | data[i+1] >> 4]);
+			b64_table[(new_data[i] & 0x03) << 4 | new_data[i+1] >> 4]);
 		encoded.push_back(
-			b64_table[(data[i+1] & 0x0F) << 2]);
+			b64_table[(new_data[i+1] & 0x0F) << 2]);
 		encoded.push_back('=');
-	} else if (i < data_length) {
+	} else if (i < new_data.size()) {
 		encoded.push_back(
-			b64_table[data[i] >> 2]);
+			b64_table[new_data[i] >> 2]);
 		encoded.push_back(
-			b64_table[(data[i] & 0x03) << 4]);
+			b64_table[(new_data[i] & 0x03) << 4]);
 		encoded.push_back('=');
 		encoded.push_back('=');
 	} 
@@ -111,10 +148,10 @@ void print_image(int const height, int const width, int const channels, unsigned
     size_t p_height = window.ws_row;
     size_t p_width = window.ws_col;
 
-    if (height < width) {
-    	p_height = height * p_width / (2 * width);  // it must be multiplied by two since rows are double the height of columns
+    if (new_height < new_width) {
+    	p_height = new_height * p_width / (2 * new_width);  // it must be multiplied by two since rows are double the height of columns
     } else {
-    	p_width = 2 * width * p_height / height;
+    	p_width = 2 * new_width * p_height / new_height;
     }
 
 	// transmitting one chunk at a time
@@ -127,9 +164,9 @@ void print_image(int const height, int const width, int const channels, unsigned
 		string chunk = encoded.substr(offset, count);
 
 		cout << "\033_Gq=1,a=T,i=1,m=" << (count == chunk_size ? 1 : 0)
-			<< ",f=" << channels * 8
-			<< ",s=" << width
-			<< ",v=" << height
+			<< ",f=" << channels * 8  //number of bits for storing a pixel in RGB8 or RBA8 format
+			<< ",s=" << new_width
+			<< ",v=" << new_height
 			<< ",c=" << p_width
 			<< ",r=" << p_height
 			<< ";" << chunk
@@ -417,7 +454,7 @@ int main(int argc, char* argv[]){
 		output = flatten(&red, &green, &blue);
 	}
 
-	if (args.print) print_image(height, width, channels, output.data());
+	if (args.print) print_image(height, width, channels, output);
 	if (args.dry) return 0;
 
 	if (!args.print || !string(args.output_file).empty()) {
@@ -440,7 +477,6 @@ int main(int argc, char* argv[]){
 				output_hdr.emplace_back(static_cast<float>(value) / 255.0f);
 			}
 			error = stbi_write_hdr(output_file.c_str(), width, height, channels, output_hdr.data());
-			cout << "Exporting to HDR does not work yet" << endl;
 		} else {
 			cout << "Format of the image to export could not be recognized\n" << "Exporting as png..." << endl;
 			error = stbi_write_png(output_file.replace_extension(".png").c_str(), width, height, channels, output.data(), 0);

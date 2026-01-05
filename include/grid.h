@@ -3,6 +3,7 @@
 #include <iostream>
 #include <vector>
 #include <algorithm>
+#include <functional>
 #include <limits>
 
 template <typename T>
@@ -22,21 +23,17 @@ Grid (size_t const height, size_t const width)
 Grid (size_t const height, size_t const width, T const &value)
 	: m_height(height), m_width(width), m_data(m_height * m_width, value) {}
 
-Grid (size_t const height, size_t const width, std::vector<T> data)
-	: m_height(height), m_width(width), m_data(data) {}
+template <typename U>
+Grid (size_t const height, size_t const width, U const *ptr)
+	: m_height(height), m_width(width), m_data(ptr, ptr + width * height) {}
 
 template <typename U>
-Grid (const Grid<U>& other)
-	: m_height (other.height()), m_width (other.width()), m_data (m_height * m_width)
-{
-	if constexpr (std::is_same_v<T, U>) {
-		std::copy(other.m_data.begin(), other.m_data.end(), m_data.begin());
-	} else {
-		for (size_t i = 0; i < other.size(); i++){
-			m_data[i] = static_cast<T>(other.data()[i]);
-		}	
-	}
-}
+Grid (size_t const height, size_t const width, std::vector<U> data)
+	: m_height(height), m_width(width), m_data(data.data().begin(), data.data().end()) {}
+
+template <typename U>
+Grid (Grid<U> const &other)
+	: m_height (other.height()), m_width (other.width()), m_data (other.data().begin(), other.data().end()) {}
 
 Grid<T>& reshape_raw(size_t const height, size_t const width){ // USED MOSTLY FOR UNINITIALIZED GRIDS
 	m_height = height;
@@ -45,6 +42,7 @@ Grid<T>& reshape_raw(size_t const height, size_t const width){ // USED MOSTLY FO
 	return *this;
 }
 
+inline bool	empty() const { return m_data.empty(); }
 inline size_t size() const { return m_data.size(); }
 inline size_t width() const { return m_width; }
 inline size_t height() const { return m_height; }
@@ -78,7 +76,9 @@ Grid<T>& mutate (F&& func, Args&&... args) {
 	T* __restrict data = this->raw();
 
 	for (size_t i = 0; i < size; i++) {
-		func(data[i], std::forward<Args>(args)...);
+		std::invoke(std::forward<F>(func),
+			data[i],
+			std::forward<Args>(args)...);
 	}
 
 	return *this;
@@ -92,7 +92,9 @@ Grid<T> transformed (F&& func, Args&&... args) const {
 	T* __restrict new_data = new_grid.raw();
 
 	for (size_t i = 0; i < size; i++){
-		new_data[i] = func(data[i], std::forward<Args>(args)...);
+		new_data[i] = std::invoke(std::forward<F>(func),
+			data[i],
+			std::forward<Args>(args)...);
 	}
 
 	return new_grid;
@@ -102,19 +104,19 @@ T max() const {
 	const T* __restrict data = m_data.data();
 	size_t const size = m_data.size();
 
-	T max = std::numeric_limits<T>::lowest();
-	for (size_t i = 0; i < size; i++) {
+	T max = m_data[0];
+	for (size_t i = 1; i < size; i++) {
 		if (max < data[i]) max = data[i];
 	}
 
 	return max;
 }
 
-T max_abs() const {
+T abs_max()	const {
 	const T* __restrict data = m_data.data();
 	size_t const size = m_data.size();
 
-	T max = T{};
+	T max = {};
 	for (size_t i = 0; i < size; i++) {
 		if (max < std::abs(data[i])) max = std::abs(data[i]);
 	}
@@ -123,9 +125,7 @@ T max_abs() const {
 }
 
 Grid<T>& normalize() {
-	T max = max_abs();
-	*this /= max;
-	return *this;
+	return *this /= abs_max();
 }
 
 Grid<T> pad(size_t const padding, T const &value = T{}) const {
@@ -167,9 +167,13 @@ Grid<T> pad_vh(size_t const v_pad, size_t const h_pad, T const &value = T{}) con
 	return new_grid;
 }
 
+template<typename U>
+Grid<T> convolve(Grid<U> kernel) const {
+	return this->convolve_no_transpose(kernel.transpose());
+}
 
 template <typename U>
-Grid<T> convolve(Grid<U> const &kernel) const {
+Grid<T> convolve_no_transpose(Grid<U> const &kernel) const {
 	size_t const kh = kernel.height();
 	size_t const kw = kernel.width();
 
@@ -198,8 +202,13 @@ Grid<T> convolve(Grid<U> const &kernel) const {
 	return out;
 }
 
+template<typename U>
+Grid<T> convolve(Grid<U> kernel, Grid<float> const &mask) const {
+	return this->convolve_no_transpose(kernel.transpose(), mask);
+}
+
 template <typename U>
-Grid<T> convolve(Grid<U> const &kernel, Grid<float> const &mask) const {
+Grid<T> convolve_no_transpose(Grid<U> const &kernel, Grid<float> const &mask) const {
 	size_t const kh = kernel.height();
 	size_t const kw = kernel.width();
 
@@ -467,6 +476,139 @@ Grid<T> convolve(std::vector<U> const &kernel_v, std::vector<U> const &kernel_h,
 	return out;
 }
 
+template <typename U>
+Grid<T> convolve_horizontal(std::vector<U> const &kernel) {
+	size_t const ks = kernel.size();
+	size_t const pad = ks / 2;
+
+	if (ks % 2 == 0) {
+		throw std::out_of_range("Vector to convolve must have odd size.");
+	}
+
+	Grid<T> const padded = this->pad_vh(0, pad);
+	Grid<T> out(m_height, m_width, T{});
+
+	const U* __restrict kd = kernel.data();
+	const T* __restrict pd = padded.raw();
+	T* __restrict od = out.raw();
+
+	size_t const pw = padded.width();
+
+	for (size_t y = 0; y < m_height; y++) {
+		for (size_t x = 0; x < m_width; x++) {
+			std::common_type_t<T, U> sum = 0;
+
+			for (size_t i = 0; i < ks; i++) {
+				sum += pd[y * pw + x + i] * kd[i];
+			}
+
+			out[y * pw + x] = sum;
+		}
+	}
+
+	return out;
+}
+
+template <typename U>
+Grid<T> convolve_horizontal(std::vector<U> const &kernel, Grid<float> const &mask) {
+	size_t const ks = kernel.size();
+	size_t const pad = ks / 2;
+
+	if (ks % 2 == 0) {
+		throw std::out_of_range("Vector to convolve must have odd size.");
+	} else if (m_height != mask.height() || m_width != mask.width()) {
+		throw std::out_of_range("Maks must be the same size as the grid to convolve.");
+	}
+
+	Grid<T> const padded = this->pad_vh(0, pad);
+	Grid<T> out(m_height, m_width, T{});
+
+	const U* __restrict kd = kernel.data();
+	const T* __restrict pd = padded.raw();
+	T* __restrict od = out.raw();
+
+	size_t const pw = padded.width();
+
+	for (size_t y = 0; y < m_height; y++) {
+		for (size_t x = 0; x < m_width; x++) {
+			std::common_type_t<T, U> sum = 0;
+
+			for (size_t i = 0; i < ks; i++) {
+				sum += pd[y * pw + x + i] * kd[i];
+			}
+
+			out[y * pw + x] = sum * mask[y * m_width + x] + (*this)[y][x] * (1 - mask[y][x]); ;
+		}
+	}
+
+	return out;
+}
+
+template <typename U>
+Grid<T> convolve_vertical(std::vector<U> const &kernel) {
+	size_t const ks = kernel.size();
+	size_t const pad = ks / 2;
+
+	if (ks % 2 == 0) {
+		throw std::out_of_range("Vector to convolve must have odd size.");
+	}
+
+	Grid<T> const padded = this->pad_vh(pad, 0);
+	Grid<T> out(m_height, m_width, T{});
+
+	const U* __restrict kd = kernel.data();
+	const T* __restrict pd = padded.raw();
+	T* __restrict od = out.raw();
+
+	size_t const pw = padded.width();
+
+	for (size_t y = 0; y < m_height; y++) {
+		for (size_t x = 0; x < m_width; x++) {
+			std::common_type_t<T, U> sum = 0;
+
+			for (size_t i = 0; i < ks; i++) {
+				sum += pd[(y + i) * pw + x] * kd[i];
+			}
+
+			out[y * pw + x] = sum;
+		}
+	}
+
+	return out;
+}
+
+template <typename U>
+Grid<T> convolve_vertical(std::vector<U> const &kernel, Grid<float> const &mask) {
+	size_t const ks = kernel.size();
+	size_t const pad = ks / 2;
+
+	if (ks % 2 == 0) {
+		throw std::out_of_range("Vector to convolve must have odd size.");
+	}
+
+	Grid<T> const padded = this->pad_vh(pad, 0);
+	Grid<T> out(m_height, m_width, T{});
+
+	const U* __restrict kd = kernel.data();
+	const T* __restrict pd = padded.raw();
+	T* __restrict od = out.raw();
+
+	size_t const pw = padded.width();
+
+	for (size_t y = 0; y < m_height; y++) {
+		for (size_t x = 0; x < m_width; x++) {
+			std::common_type_t<T, U> sum = 0;
+
+			for (size_t i = 0; i < ks; i++) {
+				sum += pd[(y + i) * pw + x] * kd[i];
+			}
+
+			out[y * pw + x] = sum * mask[y * m_width + x] + (*this)[y][x] * (1 - mask[y][x]); ;;
+		}
+	}
+
+	return out;
+}
 
 
 // SHAPING
@@ -591,18 +733,50 @@ Grid<T> slice (
 	return out;
 }
 
-bool empty() {
-	return m_data.empty();
+// Only defined to be able to get slices without creating new grids
+class View {
+	size_t m_y, m_x, m_height, m_width, m_big_width;
+	T* m_data;
+public:
+	View(size_t const y, size_t const x, size_t const height, size_t const width, Grid<T> const &data) {
+		assert(y + height < data.height() && x + width < data.width());
+		m_y = y;
+		m_x = x;
+		m_width = width;
+		m_height = height;
+		m_big_width = data.width();
+		m_data = data.raw();
+	}
+
+	// Fast access with no checks
+	inline T* operator[] (size_t const row_index) {
+		return m_data + row_index * m_big_width;
+	}
+
+	inline const T* operator[] (size_t const row_index) const {
+		return m_data + row_index * m_big_width;
+	}
+
+	inline size_t width() const { return m_width; }
+	inline size_t height() const { return m_height; }
+	inline size_t y() const { return m_y; }
+	inline size_t x() const { return m_x; }
+};
+
+View view(size_t const y, size_t const x, size_t const height, size_t const width) {
+	return View(y, x, height, width, *this);
 }
 
 void print() {
+	std::cout << "[";
 	for (size_t i = 0; i < m_height; i++){
+		std::cout << "[";
 		for (size_t j = 0; j < m_width; j++){
 			std::cout << (*this)[i][j] << " ";
 		}
-		std::cout << "\n";
+		std::cout << "]\n";
 	}
-	std::cout << std::endl;
+	std::cout << "]" << std::endl;
 }
 
 // UNARY OPERATORS
@@ -632,7 +806,7 @@ Grid<T> operator+ (U const &scalar) const {
 template <typename U>
 Grid<T>& operator+= (U const &scalar) {
 	this->mutate([](T &x, U const &s){
-		return x += s;
+		x += s;
 	}, scalar);
 	return *this;
 }
@@ -648,7 +822,7 @@ Grid<T> operator- (U const &scalar) const {
 template <typename U>
 Grid<T>& operator-= (U const &scalar) {
 	this->mutate([](T &x, U const &s){
-		return x -= s;
+		x -= s;
 	}, scalar);
 	return *this;
 }
@@ -663,7 +837,7 @@ Grid<T> operator* (U const &scalar) const {
 template <typename U>
 Grid<T>& operator*= (U const &scalar) {
 	this->mutate([](T &x, U const &s){
-		return x *= s;
+		x *= s;
 	}, scalar);
 	return *this;
 }
@@ -678,7 +852,7 @@ Grid<T> operator/ (U const &scalar) const {
 template <typename U>
 Grid<T>& operator/= (U const &scalar) {
 	this->mutate([](T &x, U const &s){
-		return x /= s;
+		x /= s;
 	}, scalar);
 	return *this;
 }
@@ -835,13 +1009,13 @@ Grid<T>& operator/= (Grid<U> const &input) {
 template <typename T, typename U>
 Grid<T> operator- (U const &scalar, Grid<T> const &mat) {
 	return mat.transformed([](T const &x, U const &s){
-		return s - x;
+		return static_cast<T>(s - x);
 	}, scalar);
 }
 
 template <typename T, typename U>
 Grid<T> operator/ (U const &scalar, Grid<T> const &mat) {
 	return mat.transformed([](T const &x, U const &s){
-		return s / x;
+		return static_cast<T>(s / x);
 	}, scalar);
 }

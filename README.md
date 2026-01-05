@@ -2,7 +2,7 @@
 
 KQuantizer is a very simple CLI color quantizer for images. It takes a path and a mode as required arguments and returns an image quantized with the desired mode. It works best with high contrast images that have a big focal object.
 
-Currently it has 5 modes:
+Currently, it has 5 modes:
 - search
 - equidistant
 - self
@@ -20,7 +20,7 @@ Searches for the nearest color from the selected palette to each pixel of the im
 
 ## Equidistant
 
-Quantizes each pixel to a band based on it's brightness and then assigns a color from the palette to each band.
+Quantizes each pixel to a band based on its brightness and then assigns a color from the palette to each band.
 
 <p float="left">
     <img src="demos/slayer.jpg" width="49%" />
@@ -38,7 +38,7 @@ Quantizes each channel to a band given the selected resolution, for example a re
 
 ## Self-Sort
 
-Similar to _equidistant_ but creates a pallette based on the brightness of the pixels in the input file.
+Similar to _equidistant_ but creates a palette based on the brightness of the pixels in the input file.
 
 <p float="left">
     <img src="demos/slayer.jpg" width="49%" />
@@ -62,6 +62,7 @@ Not every mode supports all flags or options, here is the possible options that 
     - ```-o``` Select the file output, if not passed the program will append mode and palette to the name of the file.
     - ```-q``` If the output file is in ```.jpg``` format you can pass a number between ```1``` and ```100``` to select the export quality, if not passed it will default to ```80```. 
     - ```--print``` Print image to the console (only kitty protocol supported). It will prevent the image from being saved unless ```-o``` is also passed.
+    - ```--dry``` Run the program without saving the output. Good for testing performance.
 - **Search**
     - ```-p``` Select palette, defaults to ```nord```.
 - **Equidistant**
@@ -77,7 +78,7 @@ You can always see what options are available by passing ```-h``` without any ot
 
 ## Palettes
 
-Currently has only 3 palettes but you can add your own since it sources them from the ```palettes.txt``` file that is located in ```../palettes.txt```. You can also move it to ```~/.config/kquantizer/palettes.txt```.
+Currently, has only 3 palettes, but you can add your own since it sources them from the ```palettes.txt``` file that is located in ```../palettes.txt```. You can also move it to ```~/.config/kquantizer/palettes.txt```.
 
 The syntax is quite simple, you denote a new palette with ```[]``` and then you just list your RGB values between 0 and 255. Here is an example:
 ~~~
@@ -88,11 +89,11 @@ The syntax is quite simple, you denote a new palette with ```[]``` and then you 
 229	233	240
 ~~~
 
-It will automatically detect the end of the palette and it also supports comments as lines starting with ```#```.
+It will automatically detect the end of the palette, and it also supports comments as lines starting with ```#```.
 
 ## Installation
 
-Currently there is no way to install it in your system, however you can compile it and run it from it's directory.
+Currently, there is no way to install it in your system, however you can compile it and run it from its directory.
 
 Dependencies to compile:
 - git
