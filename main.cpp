@@ -19,12 +19,10 @@
     BOOLEAN_ARG(print, "--print", "Print processed image to the console without saving it unless '-o' is also passed") \
     BOOLEAN_ARG(dry, "--dry", "Run the program without saving the processed image") \
 
-#include <thread>
-
 
 #ifdef __cplusplus
-extern "C" {  
-#endif  
+extern "C" {
+#endif
 
 #include "easyargs.h"
 #include "stb_image.h"
@@ -43,6 +41,7 @@ extern "C" {
 #include <filesystem>
 #include <sys/ioctl.h>
 #include <array>
+#include <thread>
 
 #include "kdtree.h"
 #include "grid.h"
@@ -252,35 +251,30 @@ void quantize_search(
 	}
 }
 
-bool quantize_2d_vector_to_list(Grid<int> const &mat,
+bool quantize_to_list_by_mask(Grid<int> const &mask,
 	vector<array<int,3>> const &list,
-	Grid<int> * red,
-	Grid<int> * green,
-	Grid<int> * blue
+	Grid<int> * const red,
+	Grid<int> * const green,
+	Grid<int> * const blue
 ){
-    size_t const size = list.size();
 
-    for (size_t i = 0; i < red->height(); i++){
-    	for (size_t j = 0; j < red->width(); j++){
-    		size_t const color_pos = (mat[i][j] * (size - 1) + 127) / 255;
-    		(*red)[i][j] = list[color_pos][0];
-    		(*green)[i][j] = list[color_pos][1];
-    		(*blue)[i][j] = list[color_pos][2];
-    	}
+    for (size_t i = 0; i < red->size(); i++){
+    		size_t const color_pos = (mask.data()[i] * (list.size() - 1) + 127) / 255;
+    		red->data()[i] = list[color_pos][0];
+    		green->data()[i] = list[color_pos][1];
+    		blue->data()[i] = list[color_pos][2];
     }
     
     return true;
 }
 
 
-Grid<int> quantize_2d_vector_to_self(Grid<int> mat, size_t const resolution){
+Grid<int> quantize_to_self(Grid<int> mat, size_t const resolution){
 
-    for (size_t i = 0; i < mat.height(); i++){
-    	for (size_t j = 0; j < mat.width(); j++){
-    		float const cache = floor(static_cast<float>(mat[i][j]) / 255.0f * static_cast<float>(resolution - 1) + 0.5f);
-            mat[i][j] = cache * 255.0f / static_cast<float>(resolution - 1);
-		}
-    }	
+    for (size_t i = 0; i < mat.size(); i++){
+    	float const cache = floor(static_cast<float>(mat.data()[i]) / 255.0f * static_cast<float>(resolution - 1) + 0.5f);
+        mat.data()[i] = cache * 255.0f / static_cast<float>(resolution - 1);
+    }
     
     return mat;
 }
@@ -405,7 +399,7 @@ int main(int argc, char* argv[]){
 		if (palette.empty()) return 1;
 		
 		sort_color_list(palette);
-		quantize_2d_vector_to_list(grey, palette, &red, &green, &blue);
+		quantize_to_list_by_mask(grey, palette, &red, &green, &blue);
 		
 		output_file = out_name(input_file, "equidistant_" + string(args.palette));
 
@@ -414,9 +408,9 @@ int main(int argc, char* argv[]){
 	
 		vectorize_to_rgb(data, width, height, &red, &green, &blue);
 
-		red = quantize_2d_vector_to_self(red, args.resolution);
-		green = quantize_2d_vector_to_self(green, args.resolution);
-		blue = quantize_2d_vector_to_self(blue, args.resolution);
+		red = quantize_to_self(red, args.resolution);
+		green = quantize_to_self(green, args.resolution);
+		blue = quantize_to_self(blue, args.resolution);
 
 		output_file = out_name(input_file, "self");
 
@@ -427,14 +421,14 @@ int main(int argc, char* argv[]){
 		color_list = retrieve_selected_colors(color_list, args.resolution, true);
 		
 		Grid<int> grey = rgb_to_greyscale(red, green, blue);
-		quantize_2d_vector_to_list(grey, color_list, &red, &green, &blue);
+		quantize_to_list_by_mask(grey, color_list, &red, &green, &blue);
 		
 		output_file = out_name(input_file, "self_sort");
 
 		
 	} else if (mode == "bw") {
 
-		Grid<int> grey = quantize_2d_vector_to_self(rgb_to_greyscale(red, green, blue), args.resolution);
+		Grid<int> grey = quantize_to_self(rgb_to_greyscale(red, green, blue), args.resolution);
 
 		red = grey;
 		green = grey;
