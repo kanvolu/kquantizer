@@ -307,6 +307,8 @@ int main(int argc, char* argv[]){
 		return 1;
 	}
 
+	string mode(args.mode);
+
 	// IMPORT
 	
 	int width, height, channels;
@@ -355,8 +357,7 @@ int main(int argc, char* argv[]){
 
 
 	// PROCESSING
-	
-	if (string(args.mode) == "search"){ // TODO make resolution work by finding the farthest points apart from each other in the 3D set that is the palette
+	if (mode == "search"){ // TODO make resolution work by finding the farthest points apart from each other in the 3D set that is the palette
 	
 		palette = import_palette(args.palette);
 		if (palette.empty()) return 1;
@@ -365,6 +366,7 @@ int main(int argc, char* argv[]){
 		constexpr size_t MAX_SIZE_PER_THREAD = 720 * 1280;
 		if (red.size() > MAX_SIZE_PER_THREAD * 3 / 2) {
 			size_t const thread_count = red.size() / MAX_SIZE_PER_THREAD;
+			size_t const thread_size = red.size() / thread_count;
 			vector<thread> pool;
 			pool.reserve(thread_count);
 
@@ -372,21 +374,23 @@ int main(int argc, char* argv[]){
 				pool.emplace_back(
 					quantize_search,
 					ref(palette_tree),
-					red.raw() + MAX_SIZE_PER_THREAD * i,
-					green.raw() + MAX_SIZE_PER_THREAD * i,
-					blue.raw() + MAX_SIZE_PER_THREAD * i,
-					MAX_SIZE_PER_THREAD);
+					red.raw() + thread_size * i,
+					green.raw() + thread_size * i,
+					blue.raw() + thread_size * i,
+					thread_size);
 			}
-			size_t last_index = MAX_SIZE_PER_THREAD * thread_count;
-			quantize_search(palette_tree,
-					red.raw() + last_index,
-					green.raw() + last_index,
-					blue.raw() + last_index,
-					red.size() - last_index);
 
-			for (auto &floaty : pool) { //called it floaty but I mean a thread, just could not use the symbol
+			size_t last_index = thread_size * (thread_count - 1);
+			quantize_search(palette_tree,
+				red.raw() + last_index,
+				green.raw() + last_index,
+				blue.raw() + last_index,
+				red.size() - last_index);
+
+			for (auto &floaty : pool) { //called it floaty, but I mean a thread, just could not use the symbol
 				floaty.join();
 			}
+
 		} else {
 			quantize_search(palette_tree, red.raw(), green.raw(), blue.raw(), red.size());
 		}
@@ -394,7 +398,7 @@ int main(int argc, char* argv[]){
 		output_file = out_name(input_file, "search_" + string(args.palette));
 
 		
-	} else if (string(args.mode) == "equidistant"){
+	} else if (mode == "equidistant"){
 	
 		Grid<int> grey = rgb_to_greyscale(red, green, blue);
 		palette = import_palette(args.palette);
@@ -406,7 +410,7 @@ int main(int argc, char* argv[]){
 		output_file = out_name(input_file, "equidistant_" + string(args.palette));
 
 		
-	} else if (string(args.mode) == "self"){
+	} else if (mode == "self"){
 	
 		vectorize_to_rgb(data, width, height, &red, &green, &blue);
 
@@ -417,7 +421,7 @@ int main(int argc, char* argv[]){
 		output_file = out_name(input_file, "self");
 
 		
-	} else if (string(args.mode) == "self-sort"){
+	} else if (mode == "self-sort"){
 	
 		vector<array<int, 3>> color_list = vectorize_to_color_list(data, width * height * channels, channels);
 		color_list = retrieve_selected_colors(color_list, args.resolution, true);
@@ -428,7 +432,7 @@ int main(int argc, char* argv[]){
 		output_file = out_name(input_file, "self_sort");
 
 		
-	} else if (string(args.mode) == "bw") {
+	} else if (mode == "bw") {
 
 		Grid<int> grey = quantize_2d_vector_to_self(rgb_to_greyscale(red, green, blue), args.resolution);
 
@@ -439,7 +443,7 @@ int main(int argc, char* argv[]){
 		output_file = out_name(input_file, "bw");
 
 		
-// 	} else if (string(args.mode) == "blur"){
+// 	} else if (mode == "blur"){
 // 		grid<float> kernel = g_kernel(3, 1);
 // 		
 // 		red = red.convolve(kernel);
@@ -447,7 +451,7 @@ int main(int argc, char* argv[]){
 // 		blue = blue.convolve(kernel);
 // 
 // 		output_file = out_name(input_file, "blur");
-// 	} else if (string(args.mode) == "edges") {
+// 	} else if (mode == "edges") {
 // 		grey = rgb_to_greyscale(red, green, blue);
 // 		edges = detect_edges_sobel(grey);
 // 		edges *= 255;
@@ -494,8 +498,6 @@ int main(int argc, char* argv[]){
 	if (!args.print || !string(args.output_file).empty()) {
 
 		int error;
-
-		// TODO maybe use enums for mode selection and export selection
 
 		if (filesystem::path extension = output_file.extension(); extension == ".png") {
 			error = stbi_write_png(output_file.c_str(), width, height, channels, output.data(), 0);
