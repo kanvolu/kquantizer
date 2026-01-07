@@ -50,7 +50,7 @@ void next_node(std::vector<std::array<T, C>> data, size_t const depth = 0){
 	}
 	else if (data.size() == 2)
 	{
-		std::sort(data.begin(), data.end(), [k] (const auto& a, const auto& b) {
+		std::sort(data.begin(), data.end(), [k] (auto const &a, auto const &b) {
 			return a[k] < b[k];
 			});
 
@@ -62,7 +62,7 @@ void next_node(std::vector<std::array<T, C>> data, size_t const depth = 0){
 	else
 	{
 		size_t m = data.size() / 2;
-		std::sort(data.begin(), data.end(), [k] (const auto& a, const auto& b) {
+		std::sort(data.begin(), data.end(), [k] (auto const &a, auto const &b) {
 			return a[k] < b[k];});
 		size_t cur = m_tree.size();
 
@@ -106,7 +106,7 @@ KDTree(std::vector<std::array<T, C>> data){
 	next_node(data);
 }
 
-size_t minimum() const {
+size_t minimum_position() const {
 	size_t minimum_pos = 0;
 	T minimum_sum = 0;
 	for (const auto& value : m_tree[0]){
@@ -115,7 +115,7 @@ size_t minimum() const {
 
 	for (size_t i = 1; i < m_tree.size(); i++){
 		T cache_sum = 0;
-		for (size_t j = 0; j < m_tree[i].size(); j++){
+		for (size_t j = 0; j < C; j++){
 			cache_sum += m_tree[i][j] * m_tree[i][j];
 		}
 		if (cache_sum < minimum_sum){

@@ -1,3 +1,6 @@
 lancia*
 test*
-build/
+#build/*
+#.cache/*
+#cmake-build-debug/*
+#cmake-build-release/*
