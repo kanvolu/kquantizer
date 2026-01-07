@@ -18,7 +18,8 @@
     BOOLEAN_ARG(help, "-h", "Show help") \
     BOOLEAN_ARG(print, "--print", "Print processed image to the console without saving it unless '-o' is also passed") \
     BOOLEAN_ARG(dry, "--dry", "Run the program without saving the processed image") \
-    
+
+#include <thread>
 
 
 #ifdef __cplusplus
@@ -233,6 +234,23 @@ vector<array<int, 3>> retrieve_selected_colors(vector<array<int, 3>> &list, size
 	return out;
 }
 
+void quantize_search(
+	KDTree<int, 3> &palette,
+	int * const red,
+	int * const green,
+	int * const blue,
+	size_t const length
+){
+	if (length == 0) return;
+
+	for (size_t i = 0; i < length; i++){
+		array<int, 3> cache = palette.nearest({red[i], green[i], blue[i]});
+
+		red[i] = cache[0];
+		green[i] = cache[1];
+		blue[i] = cache[2];
+	}
+}
 
 bool quantize_2d_vector_to_list(Grid<int> const &mat,
 	vector<array<int,3>> const &list,
@@ -338,23 +356,39 @@ int main(int argc, char* argv[]){
 
 	// PROCESSING
 	
-	if (string(args.mode) == "search"){ // TODO make resolution work by finding the farthest points apart from eachother in the 3D set that is the palette
+	if (string(args.mode) == "search"){ // TODO make resolution work by finding the farthest points apart from each other in the 3D set that is the palette
 	
 		palette = import_palette(args.palette);
 		if (palette.empty()) return 1;
 		KDTree<int, 3> palette_tree(palette);
-		//invariants for accessing raw data in the grids since the same process is applied to all pixels
-		size_t size = red.size();
-		int* __restrict r_raw = red.raw();
-		int* __restrict g_raw = green.raw();
-		int* __restrict b_raw = blue.raw();
 
-		for (size_t i = 0; i < size; i++){
-			array<int, 3> cache = palette_tree.nearest({r_raw[i], g_raw[i], b_raw[i]});
+		constexpr size_t MAX_SIZE_PER_THREAD = 720 * 1280;
+		if (red.size() > MAX_SIZE_PER_THREAD * 3 / 2) {
+			size_t const thread_count = red.size() / MAX_SIZE_PER_THREAD;
+			vector<thread> pool;
+			pool.reserve(thread_count);
 
-			r_raw[i] = cache[0];
-			g_raw[i] = cache[1];
-			b_raw[i] = cache[2];
+			for (size_t i = 0; i < thread_count - 1; i++) {
+				pool.emplace_back(
+					quantize_search,
+					ref(palette_tree),
+					red.raw() + MAX_SIZE_PER_THREAD * i,
+					green.raw() + MAX_SIZE_PER_THREAD * i,
+					blue.raw() + MAX_SIZE_PER_THREAD * i,
+					MAX_SIZE_PER_THREAD);
+			}
+			size_t last_index = MAX_SIZE_PER_THREAD * thread_count;
+			quantize_search(palette_tree,
+					red.raw() + last_index,
+					green.raw() + last_index,
+					blue.raw() + last_index,
+					red.size() - last_index);
+
+			for (auto &floaty : pool) { //called it floaty but I mean a thread, just could not use the symbol
+				floaty.join();
+			}
+		} else {
+			quantize_search(palette_tree, red.raw(), green.raw(), blue.raw(), red.size());
 		}
 		
 		output_file = out_name(input_file, "search_" + string(args.palette));
