@@ -1,8 +1,3 @@
-#define _USE_MATH_DEFINE
-#define STB_IMAGE_IMPLEMENTATION
-#define STB_IMAGE_WRITE_IMPLEMENTATION
-
- 
 #define REQUIRED_ARGS \
 	REQUIRED_STRING_ARG(input_file, "input", "Input file path") \
 	REQUIRED_STRING_ARG(mode, "mode", "Mode for quantization, options are: search, equidistant, self, self-sort, bw")
@@ -25,7 +20,9 @@ extern "C" {
 #endif
 
 #include "easyargs.h"
+#define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
 #include "stb_image_write.h"
 
 #ifdef __cplusplus
@@ -64,10 +61,10 @@ vector<unsigned char> resize_image(vector<unsigned char> const &data, size_t con
 	vector<unsigned char> output(new_size);
 
 	for (size_t i = 0; i < new_height; i++) {
-		size_t new_i = i * new_width;
-		size_t old_i = i * old_width * v_proportion;
+		size_t const new_i = i * new_width;
+		size_t const old_i = i * old_width * v_proportion;
 		for (size_t j = 0; j < new_width; j++) {
-			size_t old_j = j * h_proportion;
+			size_t const old_j = j * h_proportion;
 			for (size_t c = 0; c < channels; c++) {
 				output[(new_i + j) * channels + c] = data[(old_i + old_j) * channels + c];
 			}
@@ -234,7 +231,7 @@ vector<array<int, 3>> retrieve_selected_colors(vector<array<int, 3>> &list, size
 }
 
 void quantize_search(
-	KDTree<int, 3> &palette,
+	KDTree<int, 3> const &palette,
 	int * const red,
 	int * const green,
 	int * const blue,

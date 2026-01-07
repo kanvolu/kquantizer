@@ -74,7 +74,7 @@ void next_node(std::vector<std::array<T, C>> data, size_t const depth = 0){
 	}
 }
 
-U dist_sqrd(std::array<T, C> const &target, std::array<T, C> const &cur){
+U dist_sqrd(std::array<T, C> const &target, std::array<T, C> const &cur) const {
 	U dist = 0;
 	for (std::size_t i = 0; i < target.size(); i++){
 		dist += (target[i] - cur[i]) * (target[i] - cur[i]);
@@ -84,7 +84,7 @@ U dist_sqrd(std::array<T, C> const &target, std::array<T, C> const &cur){
 
 
 	// find the closest of 2 nodes to a point, used in the "nearest()" function
-Node closest(std::array<T, C> const &target, Node const &temp, Node const &cur){
+Node closest(std::array<T, C> const &target, Node const &temp, Node const &cur) const {
 	if (dist_sqrd(target, cur.m_data) < dist_sqrd(target, temp.m_data)){
 		return cur;
 	} else {
@@ -92,7 +92,7 @@ Node closest(std::array<T, C> const &target, Node const &temp, Node const &cur){
 	}
 }
 
-Node farthest(std::array<T, C> const &target, Node const &temp, Node const &cur){
+Node farthest(std::array<T, C> const &target, Node const &temp, Node const &cur) const {
 	if (dist_sqrd(target, temp.m_data) < dist_sqrd(target, cur.m_data)){
 		return cur;
 	} else {
@@ -106,7 +106,7 @@ KDTree(std::vector<std::array<T, C>> data){
 	next_node(data);
 }
 
-size_t minimum(){
+size_t minimum() const {
 	size_t minimum_pos = 0;
 	T minimum_sum = 0;
 	for (const auto& value : m_tree[0]){
@@ -126,7 +126,7 @@ size_t minimum(){
 	return minimum_pos;
 }
 
-std::array<T, C> nearest(std::array<T, C> const &target, size_t const cur_pos = 0){
+std::array<T, C> nearest(std::array<T, C> const &target, size_t const cur_pos = 0) const {
 	Node cur(m_tree[cur_pos]);
 	size_t k = cur.m_depth % cur.size();
 	size_t next, other;
